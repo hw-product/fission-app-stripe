@@ -132,7 +132,15 @@ class StripeController < ApplicationController
     end
   end
 
-  def confirmation
+  def hook
+    respond_to do |format|
+      format.json do
+        event = Stripe::Event.retrieve(params[:id])
+        # do stuff
+        head :ok
+      end
+    end
+  end
 
   protected
 

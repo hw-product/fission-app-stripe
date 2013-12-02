@@ -7,6 +7,6 @@ Rails.application.routes.draw do
     post 'edit', :to => 'stripe_controller#update', :as => :update_order
     delete 'destroy', :to => 'stripe_controller#destroy', :as => :destroy_order
     get 'confirmation', :to => 'stripe_controller#confirmation', :as => :order_confirmation
-    get 'hook', :to => 'stripe_controller#hook', :as => :order_hook
+    post 'hook', :to => 'stripe_controller#hook', :as => :order_hook
   end
 end
