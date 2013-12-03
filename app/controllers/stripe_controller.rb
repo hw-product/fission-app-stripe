@@ -4,6 +4,7 @@ class StripeController < ApplicationController
 
   before_action do
     @publish_key = Rails.application.config.stripe_publish_key
+    @layout_freeform = true
   end
 
   def index
@@ -16,7 +17,8 @@ class StripeController < ApplicationController
             redirect_to new_order_url
           end
         else
-          render :partial => :order_form
+          load_packages
+          render 'stripe/order_form'
         end
       end
     end
@@ -145,7 +147,7 @@ class StripeController < ApplicationController
   protected
 
   def load_packages
-    @packages = JSON.load(File.read(Rails.config.fission_stripe_packages_json))
+    @packages = JSON.load(File.read(Rails.application.config.fission_packages_json)).with_indifferent_access
   end
 
   def get_packages(pkg_id)

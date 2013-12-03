@@ -1,0 +1,29 @@
+{
+    "basic": {
+        "title": "Basic Pkgr",
+        "summary": "The basic package!",
+        "price": "19900",
+        "description": [
+            "bullet 1",
+            "bullet 2"
+        ]
+    },
+    "unbasic": {
+        "title": "Un-Basic Pkgr",
+        "summary": "The un-basic package!",
+        "price": "49900",
+        "description": [
+            "bullet 1",
+            "bullet 2"
+        ]
+    },
+    "advanced": {
+        "title": "Advanced Pkgr",
+        "summary": "The advanced package!",
+        "price": "199900",
+        "description": [
+            "bullet 1",
+            "bullet 2"
+        ]
+    }
+}
