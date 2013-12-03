@@ -25,4 +25,4 @@
                 = hidden_field_tag :subscription_id, id
                 = javascript_include_tag 'https://checkout.stripe.com/checkout.js', :class => 'stripe-button', 'data-key' => '', 'data-image' => '/checkout-image.png', 'data-name' => 'Fission', 'data-description' => pkg[:description], 'data-amount' => pkg[:price]
             - else
-              = link_to 'Sign Up!', authenticate_user_url, :class => 'btn btn-primary'
+              = link_to 'Sign Up!', '/auth/github', :class => 'btn btn-primary'
