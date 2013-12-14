@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.version     = FissionStripe::VERSION.version
   s.authors     = 'heavywater'
   s.email       = 'fission@hw-ops.com'
-  s.homepage    = 'https;//github.com/heavywater/fission_stripe'
+  s.homepage    = 'https://github.com/heavywater/fission_stripe'
   s.summary     = 'Fission Stripe mount'
   s.description = 'Fission Stripe mount'
 
