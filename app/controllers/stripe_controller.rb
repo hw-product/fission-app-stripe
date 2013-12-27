@@ -150,8 +150,9 @@ class StripeController < ApplicationController
 
   protected
 
+  # TODO: How are we identifying pricing to display?
   def load_packages
-    @packages = JSON.load(File.read(Rails.application.config.fission_packages_json)).with_indifferent_access
+    @packages = Rails.application.config.fission.pricing[:packager]
   end
 
   def get_packages(pkg_id)
