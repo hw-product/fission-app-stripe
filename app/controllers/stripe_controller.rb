@@ -167,7 +167,7 @@ class StripeController < ApplicationController
     end
   end
 
-  def set_key
+  def set_keys
     if(ENV['STRIPE_SECRET_KEY'] && ENV['STRIPE_PUBLISHABLE_KEY'])
       Rails.application.config.stripe_publish_key = ENV['STRIPE_PUBLISHABLE_KEY']
       Stripe.api_key = ENV['STRIPE_SECRET_KEY']
