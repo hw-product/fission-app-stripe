@@ -1,5 +1,9 @@
 class StripeController < ApplicationController
 
+  include ActiveSupport::Callbacks
+
+  define_callbacks :subscribed
+
   before_action :set_keys
   before_action :validate_user!, :except => [:index]
 
@@ -62,11 +66,13 @@ class StripeController < ApplicationController
         raise "Failed to save account! #{account.errors.join(', ')}"
       end
       validate_plan!(params[:subscription_id])
-      stripe_customer.update_subscription(:plan => params[:subscription_id], :prorate => true)
-      respond_to do |format|
-        format.html do
-          flash[:success] = 'New subscription was successful!'
-          redirect_to edit_account_order_url(@account)
+      run_callback :subscribed do
+        stripe_customer.update_subscription(:plan => params[:subscription_id], :prorate => true)
+        respond_to do |format|
+          format.html do
+            flash[:success] = 'New subscription was successful!'
+            redirect_to root_url
+          end
         end
       end
     rescue => e
