@@ -1,28 +1,10 @@
-%div{class: 'panel panel-primary'}
-  %div{class: 'panel-heading'}= "Account: #{@account.name} - Source: #{@account.source}"
-  %div{class: 'panel-body'}
-    - @packages.each_slice(4) do |pkgs|
-      - buffer = (12 - (pkgs.size * 3)) / 2
-      %div.row
-        - pkgs.each_with_index do |pkg_parts, idx|
-          - id, pkg = pkg_parts
-          - pkg_class = 'col-md-3'
-          - if buffer > 0 && idx == 0
-            - pkg_class << " col-md-offset-#{buffer}"
-          %div{class: pkg_class}
-            %div{class: 'panel panel-primary'}
-              %div{class: 'panel-heading'}= pkg[:title]
-              %div{class: 'panel-body'}
-                - if pkg[:description].is_a?(Array)
-                  %ul{class: 'list-unstyled'}
-                    - pkg[:description].each do |item|
-                      %li= item
-                - else
-                  = pkg[:description]
-                %br
-                %br
-                %div{class: 'well well-sm text-center'}= number_to_currency(pkg[:price].to_i / 100.to_f, precision: 2, locale: (pkg[:locale] || :en).to_sym)
-              %div{class: 'panel-footer text-center'}
-                = form_tag @stripe_customer ? update_order_url : create_order_url, method: :post do
-                  = hidden_field_tag :subscription_id, id
-                  = javascript_include_tag 'https://checkout.stripe.com/checkout.js', :class => 'stripe-button', 'data-key' => '', 'data-image' => '/checkout-image.png', 'data-name' => 'Fission', 'data-description' => pkg[:summary], 'data-amount' => pkg[:price], 'data-email' => current_user.default_identity.infos['email'], 'data-label' => 'Give Me Money!'
+%div.container.container-padding.pricing
+  %h2
+    = "Subscription (#{@account.name})"
+    - if @account.source == 'github'
+      %a.pull-right{ href: "https://github.com/#{@account}" }
+        %i.fa.fa-github-square
+
+= render partial: "stripe/pricing"
+
+%div.container.navfix
