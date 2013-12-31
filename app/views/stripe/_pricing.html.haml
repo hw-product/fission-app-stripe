@@ -1,4 +1,5 @@
-%div.container
+- @packages ||= Rails.application.config.fission.pricing[:packager]
+%div.container.navfix
   %div.row.pricing
     - @packages.each_slice(4) do |pkgs|
       - buffer = (12 - (pkgs.size * 3)) / 2
@@ -33,4 +34,7 @@
               %div.panel-footer.text-center
                 = form_tag @stripe_customer ? update_order_url : create_order_url, method: :post do
                   = hidden_field_tag :subscription_id, id
-                  = javascript_include_tag 'https://checkout.stripe.com/checkout.js', :class => 'stripe-button', 'data-key' => '', 'data-image' => '/checkout-image.png', 'data-name' => 'Fission', 'data-description' => pkg[:summary], 'data-amount' => pkg[:price], 'data-email' => current_user.default_identity.infos['email'], 'data-label' => 'Subscribe'
+                  = javascript_include_tag 'https://checkout.stripe.com/checkout.js', :class => 'stripe-button', 'data-key' => '', 'data-image' => '/checkout-image.png', 'data-name' => 'Packager.co', 'data-description' => pkg[:description][0][:label], 'data-amount' => pkg[:price], 'data-email' => current_user.default_identity.infos['email'], 'data-label' => 'Subscribe', 'data-panel-label' => 'Pay {{amount}}/mo'
+
+
+%div.container.navfix
