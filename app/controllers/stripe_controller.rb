@@ -54,7 +54,7 @@ class StripeController < ApplicationController
   def create
     begin
       user = current_user
-      account = user.base_account
+      account = @account
       stripe_customer = Stripe::Customer.create(
         :description => "#{account.name} Fission account",
         :metadata => {
@@ -62,17 +62,16 @@ class StripeController < ApplicationController
         }
       )
       account.stripe_id = stripe_customer[:id]
+      account.subscription_id = params[:subscription_id]
       unless(account.save)
         raise "Failed to save account! #{account.errors.join(', ')}"
       end
       validate_plan!(params[:subscription_id])
-      run_callback :subscribed do
-        stripe_customer.update_subscription(:plan => params[:subscription_id], :prorate => true)
-        respond_to do |format|
-          format.html do
-            flash[:success] = 'New subscription was successful!'
-            redirect_to root_url
-          end
+      stripe_customer.update_subscription(:plan => params[:subscription_id], :prorate => true)
+      respond_to do |format|
+        format.html do
+          flash[:success] = 'New subscription was successful!'
+          redirect_to root_url
         end
       end
     rescue => e
@@ -163,7 +162,7 @@ class StripeController < ApplicationController
 
   def get_packages(pkg_id)
     load_packages.detect do |pkg|
-      pkg['id'] == pkg_id
+      pkg.first == pkg_id
     end
   end
 
