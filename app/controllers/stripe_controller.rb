@@ -34,7 +34,7 @@ class StripeController < ApplicationController
   end
 
   def new
-    if(current_user.base_account.stripe_id)
+    if(@account.stripe_id)
       respond_to do |format|
         format.html do
           flash[:warning] = 'Account is already registered for payments'
