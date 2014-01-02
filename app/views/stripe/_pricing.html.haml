@@ -34,7 +34,7 @@
               %div.panel-footer.text-center
                 = form_tag @stripe_customer ? update_order_url : create_order_url, method: :post do
                   = hidden_field_tag :subscription_id, id
-                  = javascript_include_tag 'https://checkout.stripe.com/checkout.js', :class => 'stripe-button', 'data-key' => '@publish_key', 'data-image' => '/checkout-image.png', 'data-name' => Rails.application.config.site_brand, 'data-description' => pkg[:description][0][:label], 'data-amount' => pkg[:price], 'data-email' => current_user.default_identity.infos['email'], 'data-label' => 'Subscribe', 'data-panel-label' => 'Pay {{amount}}/mo'
+                  = javascript_include_tag 'https://checkout.stripe.com/checkout.js', :class => 'stripe-button', 'data-key' => '@publish_key', 'data-image' => '/checkout-image.png', 'data-name' => Rails.application.config.fission.site_brand, 'data-description' => pkg[:description][0][:label], 'data-amount' => pkg[:price], 'data-email' => current_user.default_identity.infos['email'], 'data-label' => 'Subscribe', 'data-panel-label' => 'Pay {{amount}}/mo'
 
 
 %div.container.navfix
