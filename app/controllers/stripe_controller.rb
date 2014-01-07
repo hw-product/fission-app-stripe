@@ -56,10 +56,15 @@ class StripeController < ApplicationController
       user = current_user
       account = @account
       stripe_customer = Stripe::Customer.create(
-        :description => "#{account.name} Fission account",
+        :description => "Fission account for: #{account.name}",
         :metadata => {
-          :fission_account_id => account.id
-        }
+          :fission_user_id => current_user.id,
+          :fission_username => current_user.username,
+          :fission_account_id => account.id,
+          :fission_account_name => account.name_source
+        },
+        :card => params[:stripeToken],
+        :email => params[:stripeEmail]
       )
       account.stripe_id = stripe_customer[:id]
       account.subscription_id = params[:subscription_id]
