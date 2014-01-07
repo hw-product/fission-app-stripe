@@ -34,6 +34,7 @@ class StripeController < ApplicationController
   end
 
   def new
+    # TODO: Add stripe lookup to see if this account is already registered
     if(@account.stripe_id)
       respond_to do |format|
         format.html do
