@@ -21,9 +21,9 @@ class StripeController < ApplicationController
       format.html do
         if(current_user)
           if(current_user.base_account.stripe_id)
-            redirect_to edit_account_order_url(@account)
+            redirect_to edit_account_order_url(:account_id => @account)
           else
-            redirect_to new_account_order_url(@account)
+            redirect_to new_account_order_url(:account_id => @account)
           end
         else
           load_packages
@@ -39,7 +39,7 @@ class StripeController < ApplicationController
       respond_to do |format|
         format.html do
           flash[:warning] = 'Account is already registered for payments'
-          redirect_to edit_order_path(@account)
+          redirect_to edit_order_url(:account_id => @account)
         end
       end
     else
@@ -86,7 +86,7 @@ class StripeController < ApplicationController
       respond_to do |format|
         format.html do
           flash[:error] = 'Failed to register account for payment!'
-          redirect_to new_account_order_url(@account)
+          redirect_to new_account_order_url(:account_id => @account)
         end
       end
     end
@@ -97,7 +97,7 @@ class StripeController < ApplicationController
       respond_to do |format|
         format.html do
           flash[:warning] = 'Account not registered for payment'
-          redirect_to new_account_order_path(@account)
+          redirect_to new_account_order_url(:account_id => @account)
         end
       end
     else
@@ -123,7 +123,7 @@ class StripeController < ApplicationController
       respond_to do |format|
         format.html do
           flash[:success] = 'Subscription update successful!'
-          redirect_to order_edit_url(@account)
+          redirect_to order_edit_url(:account_id => @account)
         end
       end
     rescue => e
@@ -132,7 +132,7 @@ class StripeController < ApplicationController
       respond_to do |format|
         format.html do
           flash[:error] = 'Failed to update payment information'
-          redirect_to order_edit_url(@account)
+          redirect_to order_edit_url(:account_id => @account)
         end
       end
     end
