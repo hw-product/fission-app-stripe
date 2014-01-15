@@ -4,7 +4,6 @@ class StripeController < ApplicationController
 
   define_callbacks :subscribed
 
-  before_action :set_keys
   before_action :validate_user!, :except => [:index]
 
   before_action do
@@ -175,19 +174,6 @@ class StripeController < ApplicationController
   def validate_plan!(plan_id)
     unless(get_packages(plan_id))
       raise 'ACK: BAD SUBSCRIPTION ID!'
-    end
-  end
-
-  def set_keys
-    if(ENV['STRIPE_SECRET_KEY'] && ENV['STRIPE_PUBLISHABLE_KEY'])
-      Rails.application.config.stripe_publish_key = ENV['STRIPE_PUBLISHABLE_KEY']
-      Stripe.api_key = ENV['STRIPE_SECRET_KEY']
-    elsif(Rails.application.config.fission[:stripe])
-      Rails.application.config.stripe_publish_key = Rails.application.config.fission.config[:stripe][:publishable_key]
-      Stripe.api_key = Rails.application.config.fission.config[:stripe][:secret_key]
-    else
-      Rails.logger.error 'No stripe credentials detected!'
-      raise 'Missing credentials'
     end
   end
 
