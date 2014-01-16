@@ -67,7 +67,7 @@ class StripeController < ApplicationController
         :email => params[:stripeEmail]
       )
       account.stripe_id = stripe_customer[:id]
-      account.subscription_id = params[:subscription_id]
+      account.subscription_plan_id = params[:subscription_id]
       unless(account.save)
         raise "Failed to save account! #{account.errors.join(', ')}"
       end
