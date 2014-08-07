@@ -47,12 +47,20 @@ class Admin::Stripe::PlansController < ApplicationController
         end
       end.compact
     ].with_indifferent_access
+    info_args = Hash[
+      params.map do |key, value|
+        if(key.to_s.start_with?('info_'))
+          [key.to_s.sub('info_', ''), value]
+        end
+      end.compact
+    ].with_indifferent_access
     plan_args[:metadata] = {
       :fission_product => plan_args.delete(:fission_product),
       :fission_product_features => [plan_args.delete(:fission_product_features)].flatten.compact.join(',')
     }
     begin
-      Stripe::Plan.create(plan_args)
+      plan = Stripe::Plan.create(plan_args)
+      Plan.create(info_args.merge(:remote_id => plan.id))
       flash[:success] = "New plan has been created! (#{plan_args[:name]})"
     rescue => e
       flash[:error] = "Failed to create plan! (#{plan_args[:name]}): #{e.message}"
@@ -78,6 +86,7 @@ class Admin::Stripe::PlansController < ApplicationController
       end
       format.html do
         @products = Product.all.map(&:name).sort
+        @info = Plan.find_by_remote_id(@plan.id) || {}
       end
     end
   end
@@ -90,6 +99,13 @@ class Admin::Stripe::PlansController < ApplicationController
         end
       end.compact
     ].with_indifferent_access
+    info_args = Hash[
+      params.map do |key, value|
+        if(key.to_s.start_with?('info_'))
+          [key.to_s.sub('info_', ''), value]
+        end
+      end.compact
+    ].with_indifferent_access
     plan_args[:metadata] = {
       :fission_product => plan_args.delete(:fission_product),
       :fission_product_features => [plan_args.delete(:fission_product_features)].flatten.compact.join(',')
@@ -99,6 +115,11 @@ class Admin::Stripe::PlansController < ApplicationController
         @plan.send("#{key}=", value)
       end
       @plan.save
+      info = Plan.find_by_remote_id(@plan.id) || Plan.new(:remote_id => @plan.id)
+      info_args.each do |k,v|
+        info.send("#{k}=", v)
+      end
+      info.save
       flash[:success] = "Plan has been updated! (#{plan_args[:name]})"
     rescue => e
       flash[:error] = "Failed to create plan! (#{plan_args[:name]}): #{e.message}"
@@ -122,7 +143,9 @@ class Admin::Stripe::PlansController < ApplicationController
         flash[:error] = 'Unsupported request!'
         javascript_redirect_to admin_stripe_plans_path
       end
-      format.html
+      format.html do
+        @info = Plan.find_by_remote_id(@plan.id)
+      end
     end
   end
 
@@ -152,6 +175,8 @@ class Admin::Stripe::PlansController < ApplicationController
         unless(params[:plan_id].blank?)
           @plan = Stripe::Plan.retrieve(params[:plan_id])
           @enabled = @plan[:metadata][:fission_product_features].to_s.split(',')
+        else
+          @enabled = []
         end
         @features = product ? product.product_features.map(&:name) : []
       end
