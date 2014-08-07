@@ -1,0 +1,21 @@
+%div#fission-account-new-subscription-list.container
+  - @plans.each do |product, plans|
+    %div.row
+      %div.col-md-1
+      %div.col-md-11.product-group
+        %h3= product.humanize
+    %div.row
+      - plans.sort{|x,y| x[:amount] <=> y[:amount]}.each do |plan|
+        %div{:class => "col-md-#{12 / plans.size}"}
+          %div.panel.panel-default.pricing
+            %div.panel-heading
+              %h3= plan[:name].humanize
+            %div.panel-body
+              %div.plan-price= "#{number_to_currency(plan[:amount].to_i / 100.to_f, :precision => 0, :locale => :en)}/mo"
+              %div.plan-summary= plan[:summary]
+              %div.plan-description= plan[:description]
+            %div.panel-footer
+              %div.center-block{:style => 'text-align:center'}
+                = form_tag @customer ? update_account_subscription_path(:account_id => @account) : account_subscriptions_path(:account_id => @account), :method => :post do
+                  = hidden_field_tag :plan_id, plan.id
+                  = javascript_include_tag 'https://checkout.stripe.com/checkout.js', :class => 'stripe-button', 'data-key' => @publish_key, 'data-image' => '/checkout-image.png', 'data-name' => product.humanize, 'data-description' => plan[:summary], 'data-amount' => plan[:amount], 'data-email' => current_user.email, 'data-label' => 'Subscribe', 'data-panel-label' => 'Pay {{amount}}/mo'
