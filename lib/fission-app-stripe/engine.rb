@@ -3,6 +3,7 @@ module FissionApp
     class Engine < ::Rails::Engine
 
       config.to_prepare do |config|
+        require 'stripe'
         if(ENV['STRIPE_SECRET_KEY'] && ENV['STRIPE_PUBLISHABLE_KEY'])
           Rails.application.config.stripe_publish_key = ENV['STRIPE_PUBLISHABLE_KEY']
           ::Stripe.api_key = ENV['STRIPE_SECRET_KEY']
