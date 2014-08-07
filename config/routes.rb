@@ -13,6 +13,8 @@ Rails.application.routes.draw do
     end
   end
   resources :accounts do
-    resources :subscriptions
+    scope :module => 'accounts' do
+      resources :subscriptions
+    end
   end
 end
