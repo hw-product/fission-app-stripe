@@ -11,7 +11,7 @@ module FissionApp
           ::Stripe.api_key = Rails.application.config.fission.config[:stripe][:secret_key]
         else
           Rails.logger.error 'No stripe credentials detected!'
-          raise 'Missing credentials'
+          raise 'Missing stripe credentials!'
         end
       end
 
