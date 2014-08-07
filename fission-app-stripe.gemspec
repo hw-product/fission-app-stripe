@@ -18,4 +18,5 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'rails', '~> 4.0.0'
   s.add_dependency 'stripe'
+  s.add_dependency 'kramdown'
 end
