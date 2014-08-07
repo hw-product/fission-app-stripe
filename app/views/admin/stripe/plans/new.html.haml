@@ -1,2 +1,2 @@
 %div#fission-stripe-plan-new.container.container-padding
-  = render :partial => 'admin/stripe/form'
+  = render :partial => 'admin/stripe/plans/form', :locals => {:plan => @plan, :products => @products}

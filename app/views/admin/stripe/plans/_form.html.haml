@@ -1,33 +1,56 @@
+:ruby
+  if(plan)
+    title = "Update plan #{plan[:name]}"
+    url = admin_stripe_plan_path(plan[:id])
+    method = :put
+    button_text = 'Update'
+  else
+    title = 'Create new plan'
+    plan = {}
+    url = admin_stripe_plans_path
+    method = :post
+    button_text = 'Create'
+  end
 %div.panel.panel-default
-  %div.panel-heading= title || 'New Plan'
+  %div.panel-heading
+    %h4= title
   %div.panel-body
-    :ruby
-      if(plan)
-        url = admin_stripe_plan_path(plan[:id])
-        method = :put
-        button_text = 'Create'
-      else
-        plan = {}
-        url = admin_stripe_plans_path
-        method = :post
-        button_text = 'Update'
-      end
     = form_tag url, :method => method do
-      = label_tag(:plan_name)
-      = text_field_tag :plan_name, plan[:name], :class => 'form-control'
-      - unless(plan)
-        = label_tag(:plan_id)
-        = text_field_tag :plan_id, :class => 'form-control'
-      = label_tag(:plan_fission_product)
-      = select_tag :plan_fission_product, options_for_select(products, plan[:metadata].try(:[], :fission_product)), :class => 'form-control'
-      = label_tag(:plan_statement_description)
-      = text_field_tag :plan_statement_description, plan[:statement_description], :class => 'form-control'
-      = label_tag(:plan_currency)
-      = text_field_tag :plan_currency, plan[:currency], :class => 'form-control', :default => 'USD'
-      = label_tag(:plan_interval)
-      = select_tag :plan_interval, options_for_select(['day', 'week', 'month', 'year'], plan.fetch(:interval, 'month')), :class => 'form-control'
-      = label_tag(:plan_interval_count)
-      = number_field_tag :plan_interval_count, plan[:interval_count], :class => 'form-control', :default => 1
-      = label_tag(:plan_trial_period_days)
-      = number_field_tag :plan_trial_period_days, plan[:trial_period_days], :class => 'form-control', :default => 0
+      %div.form-group
+        = label_tag(:plan_name)
+        = text_field_tag :plan_name, plan[:name], :class => 'form-control'
+      - unless(plan[:id])
+        %div.form-group
+          = label_tag(:plan_id_id)
+          = text_field_tag :plan_id, nil, :class => 'form-control'
+      %div.form-group
+        = label_tag(:plan_fission_product)
+        = select_tag :plan_fission_product, options_for_select(products), :class => 'form-control', :include_blank => true, 'sparkle-url' => load_product_features_admin_stripe_plans_path(:plan_id => plan[:id]), 'sparkle-serialize' => 'only-self', 'sparkle-ajax' => 'get'
+      %div.form-group
+        = label_tag(:plan_fission_product_features)
+        %div.checkbox#plan-product-features
+      %div.form-group
+        = label_tag(:plan_statement_description)
+        = text_field_tag :plan_statement_description, plan[:statement_description], :class => 'form-control'
+      - unless(plan[:id])
+        %div.form-group
+          = label_tag(:plan_currency)
+          = text_field_tag :plan_currency, plan.fetch(:currency, 'USD'), :class => 'form-control'
+        %div.form-group
+          = label_tag(:plan_amount)
+          = text_field_tag :plan_amount, plan[:amount], :class => 'form-control'
+        %div.form-group
+          = label_tag(:plan_interval)
+          = select_tag :plan_interval, options_for_select(['day', 'week', 'month', 'year'], plan.fetch(:interval, 'month')), :class => 'form-control'
+        %div.form-group
+          = label_tag(:plan_interval_count)
+          = number_field_tag :plan_interval_count, plan.fetch(:interval_count, 1), :class => 'form-control'
+        %div.form-group
+          = label_tag(:plan_trial_period_days)
+          = number_field_tag :plan_trial_period_days, plan.fetch(:trial_period_days, 0), :class => 'form-control', :default => 0
       = submit_tag(button_text, :class => 'btn btn-success')
+:javascript
+  sparkle_ui.form.enable_updatable_selectors();
+- if plan[:metadata].try(:[], :fission_product)
+  :javascript
+    sparkle_ui.form.register_updatable_select('plan_fission_product', {title: 'Loading product features', default_value: '#{plan[:metadata][:fission_product]}'});
