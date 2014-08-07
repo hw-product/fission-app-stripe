@@ -1,0 +1,33 @@
+%div.panel.panel-default
+  %div.panel-heading= title || 'New Plan'
+  %div.panel-body
+    :ruby
+      if(plan)
+        url = admin_stripe_plan_path(plan[:id])
+        method = :put
+        button_text = 'Create'
+      else
+        plan = {}
+        url = admin_stripe_plans_path
+        method = :post
+        button_text = 'Update'
+      end
+    = form_tag url, :method => method do
+      = label_tag(:plan_name)
+      = text_field_tag :plan_name, plan[:name], :class => 'form-control'
+      - unless(plan)
+        = label_tag(:plan_id)
+        = text_field_tag :plan_id, :class => 'form-control'
+      = label_tag(:plan_fission_product)
+      = select_tag :plan_fission_product, options_for_select(products, plan[:metadata].try(:[], :fission_product)), :class => 'form-control'
+      = label_tag(:plan_statement_description)
+      = text_field_tag :plan_statement_description, plan[:statement_description], :class => 'form-control'
+      = label_tag(:plan_currency)
+      = text_field_tag :plan_currency, plan[:currency], :class => 'form-control', :default => 'USD'
+      = label_tag(:plan_interval)
+      = select_tag :plan_interval, options_for_select(['day', 'week', 'month', 'year'], plan.fetch(:interval, 'month')), :class => 'form-control'
+      = label_tag(:plan_interval_count)
+      = number_field_tag :plan_interval_count, plan[:interval_count], :class => 'form-control', :default => 1
+      = label_tag(:plan_trial_period_days)
+      = number_field_tag :plan_trial_period_days, plan[:trial_period_days], :class => 'form-control', :default => 0
+      = submit_tag(button_text, :class => 'btn btn-success')
