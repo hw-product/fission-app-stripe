@@ -1,23 +1,23 @@
 class Admin::Stripe::PlansController < ApplicationController
 
-  before do
+  before_action do
     if(params[:id])
       @plan = Stripe::Plan.retrieve(params[:id])
     end
   end
 
   def index
-    @plans = Stripe::Plan.all.find_all do |plan|
+    @plans = Stripe::Plan.all.to_a.find_all do |plan|
       plan[:metadata][:fission_product]
     end.group_by do |plan|
       plan[:metadata][:fission_product]
     end
-    @plans.values.each do |plans|
+    @plans.each do |grouper, plans|
       plans.sort! do |x, y|
         x[:name] <=> y[:name]
       end
     end
-    @plans = @plans.values.flatten
+    @plans = @plans.map(&:last).flatten
     respond_to do |format|
       format.js do
         flash[:error] = 'Unsupported request!'
@@ -33,7 +33,9 @@ class Admin::Stripe::PlansController < ApplicationController
         flash[:error] = 'Unsupported request!'
         javascript_redirect_to admin_stripe_plans_path
       end
-      format.html
+      format.html do
+        @products = Product.all.map(&:name).sort
+      end
     end
   end
 
@@ -44,9 +46,10 @@ class Admin::Stripe::PlansController < ApplicationController
           [key.to_s.sub('plan_', ''), value]
         end
       end.compact
-    ]
+    ].with_indifferent_access
     plan_args[:metadata] = {
-      :fission_product => plan_args.delete(:fission_product)
+      :fission_product => plan_args.delete(:fission_product),
+      :fission_product_features => [plan_args.delete(:fission_product_features)].flatten.compact.join(',')
     }
     begin
       Stripe::Plan.create(plan_args)
@@ -73,7 +76,9 @@ class Admin::Stripe::PlansController < ApplicationController
         flash[:error] = 'Unsupported request!'
         javascript_redirect_to admin_stripe_plans_path
       end
-      format.html
+      format.html do
+        @products = Product.all.map(&:name).sort
+      end
     end
   end
 
@@ -84,9 +89,10 @@ class Admin::Stripe::PlansController < ApplicationController
           [key.to_s.sub('plan_', ''), value]
         end
       end.compact
-    ]
+    ].with_indifferent_access
     plan_args[:metadata] = {
-      :fission_product => plan_args.delete(:fission_product)
+      :fission_product => plan_args.delete(:fission_product),
+      :fission_product_features => [plan_args.delete(:fission_product_features)].flatten.compact.join(',')
     }
     begin
       plan_args.each do |key, value|
@@ -121,19 +127,36 @@ class Admin::Stripe::PlansController < ApplicationController
   end
 
   def destroy
+    begin
+      @plan.delete
+      flash[:success] = "Plan has been deleted (#{@plan.id})"
+    rescue => e
+      flash[:error] = "Plan delete failed: #{e.message}"
+      Rails.logger.error "Failed to delete stripe plan: #{e.class}: #{e}"
+      Rails.logger.debug "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+    end
     respond_to do |format|
       format.js do
-        flash[:error] = 'Unsupported request!'
         javascript_redirect_to admin_stripe_plans_path
       end
       format.html do
-        begin
-          @plan.delete
-        rescue => e
-          flash[:error] = "Plan delete failed: #{e.message}"
-          Rails.logger.error "Failed to delete stripe plan: #{e.class}: #{e}"
-          Rails.logger.debug "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+        redirect_to admin_stripe_plans_path
+      end
+    end
+  end
+
+  def load_product_features
+    respond_to do |format|
+      format.js do
+        product = Product.find_by_name(params[:plan_fission_product])
+        unless(params[:plan_id].blank?)
+          @plan = Stripe::Plan.retrieve(params[:plan_id])
+          @enabled = @plan[:metadata][:fission_product_features].to_s.split(',')
         end
+        @features = product ? product.product_features.map(&:name) : []
+      end
+      format.html do
+        flash[:error] = 'Unsupported request!'
         redirect_to admin_stripe_plans_path
       end
     end
