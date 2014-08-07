@@ -4,8 +4,23 @@
       %h4= "Stripe plan #{@plan[:name]}"
     %div.panel.body
       %table.table
-        - @plan.keys.each do |key|
-          %tr
-            %td.col-md-3
-              %b= key.to_s.humanize
-            %td= @plan[key]
+        %thead
+          %tr.info
+            %th{:colspan => 2}
+              Plan details
+        %tbody
+          - @plan.keys.each do |key|
+            %tr
+              %td.col-md-3
+                %b= key.to_s.humanize
+              %td= @plan[key]
+        %thead
+          %tr.info
+            %th{:colspan => 2}
+              Display details
+        %tbody
+          - @info.keys.each do |key|
+            %tr
+              %td.col-md-3
+                %b= key.to_s.humanize
+              %td= @info[key]
