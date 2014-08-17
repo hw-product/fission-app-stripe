@@ -1,1 +1,26 @@
 %div#fission-account-subscription-list.container.container-padding
+  %div.panel.panel-default
+    %div.panel-heading
+      %h4= "#{@account.name} Subscriptions"
+    %div.panel-body
+      %table.table
+        %thead
+          %tr
+            %th
+              Product
+            %th
+              Plan
+            %th
+              Created
+            %th
+        %tbody
+          - @subscriptions.each do |sub|
+            %tr{:class => sub[:subscription].status == 'active' ? '' : 'bg-danger'}
+              %td= sub[:plan].metadata[:fission_product].humanize
+              %td= sub[:plan].name
+              %td= Time.at(sub[:subscription].start).to_s
+              %td
+                %a{:href => account_subscription_path(:account_id => @account.id, :id => sub[:subscription].id)
+                  %span.glyphicon.glyphicon-zoom-in
+                %a.window-rails{:href => '#', 'window-rails-ajax' => :delete, 'window-rails-url' => account_subscription_path(:account_id => @account.id, :id => sub[:subscription].id), 'window-rails-confirm' => "Remove subscription (#{sub[:plan][:name]})?", 'window-rails-title' => 'Subscription Removal'}
+                  %span.glyphicon.glyphicon-remove
