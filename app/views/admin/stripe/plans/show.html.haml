@@ -19,7 +19,7 @@
             %th{:colspan => 2}
               Display details
         %tbody
-          - @info.keys.each do |key|
+          - (@info.try(:keys) || []).each do |key|
             %tr
               %td.col-md-3
                 %b= key.to_s.humanize
