@@ -1,7 +1,7 @@
 :ruby
   content = @features.map do |f|
     "<label>" <<
-      check_box_tag('plan_fission_product_features[]', f, @enabled.include?(f)) << f
-  end.join("\n").html_safe
+      check_box_tag('plan_fission_product_features[]', f.id, @enabled.include?(f.id)) << f.name
+  end.join("<br />").html_safe
 :erb
   $('#plan-product-features').html("<%= j(content) %>");

@@ -174,11 +174,11 @@ class Admin::Stripe::PlansController < ApplicationController
         product = Product.find_by_name(params[:plan_fission_product])
         unless(params[:plan_id].blank?)
           @plan = Stripe::Plan.retrieve(params[:plan_id])
-          @enabled = @plan[:metadata][:fission_product_features].to_s.split(',')
+          @enabled = @plan[:metadata][:fission_product_features].to_s.split(',').map(&:to_i)
         else
           @enabled = []
         end
-        @features = product ? product.product_features.map(&:name) : []
+        @features = product ? product.product_features : []
       end
       format.html do
         flash[:error] = 'Unsupported request!'
