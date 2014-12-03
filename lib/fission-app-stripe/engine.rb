@@ -23,7 +23,7 @@ module FissionApp
       end
 
       # @return [Hash] navigation
-      def fission_navigation
+      def fission_navigation(*_)
         Smash.new(
           'Stripe' => Smash.new(
             'Subscriptions' => Rails.application.routes.url_for(
