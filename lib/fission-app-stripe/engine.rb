@@ -17,6 +17,29 @@ module FissionApp
         end
       end
 
+      # @return [Array<Fission::Data::Models::Product>]
+      def fission_product
+        [Fission::Data::Models::Product.find_by_internal_name('fission')]
+      end
+
+      # @return [Hash] navigation
+      def fission_navigation
+        Smash.new(
+          'Stripe' => Smash.new(
+            'Subscriptions' => Rails.application.routes.url_for(
+              :controller => 'admin/stripe/subscriptions',
+              :action => :index,
+              :only_path => true
+            ),
+            'Plans' => Rails.application.routes.url_for(
+              :controller => 'admin/stripe/plans',
+              :action => :index,
+              :only_path => true
+            )
+          )
+        )
+      end
+
     end
   end
 end
