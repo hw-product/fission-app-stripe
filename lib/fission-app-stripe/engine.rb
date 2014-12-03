@@ -26,11 +26,6 @@ module FissionApp
       def fission_navigation(*_)
         Smash.new(
           'Stripe' => Smash.new(
-            'Subscriptions' => Rails.application.routes.url_for(
-              :controller => 'admin/stripe/subscriptions',
-              :action => :index,
-              :only_path => true
-            ),
             'Plans' => Rails.application.routes.url_for(
               :controller => 'admin/stripe/plans',
               :action => :index,
