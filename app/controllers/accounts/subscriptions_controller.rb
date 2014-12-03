@@ -1,13 +1,6 @@
 class Accounts::SubscriptionsController < ApplicationController
 
-  before_action do
-    @account = current_user.accounts.detect do |act|
-      act.id == params[:account_id].to_i
-    end
-    unless(@account)
-      raise Error::PermissionDeniedError.new 'Access denied'
-    end
-  end
+  before_action :validate_access!, :only => []
 
   def index
     respond_to do |format|
@@ -16,7 +9,7 @@ class Accounts::SubscriptionsController < ApplicationController
         javascript_redirect_to account_subscriptions_path(params)
       end
       format.html do
-        subscriptions = (fetch_stripe_customer || {}).to_hash.fetch(:subscriptions)
+        subscriptions = (fetch_stripe_customer || {}).to_hash.fetch(:subscriptions, {})
         @subscriptions = subscriptions.map do |subscription|
           {:subscription => subscription,
             :plan => Stripe::Plan.retrieve(subscription[:plan])}.with_indifferent_access
@@ -35,8 +28,12 @@ class Accounts::SubscriptionsController < ApplicationController
       end
       format.html do
         @customer = fetch_stripe_customer
-        @current_subscriptions = @customer.subscriptions.map(&:plan)
-        if(Product.where(:vanity_dns => request.env['SERVER_NAME']))
+        if(@customer)
+          @current_subscriptions = @customer.subscriptions.map(&:plan)
+        else
+          @current_subscriptions = []
+        end
+        if(Product.where(:vanity_dns => request.env['SERVER_NAME']).first)
           products = [Product.where(:vanity_dns => request.env['SERVER_NAME']).first.name]
         else
           products = Product.all.map(&:name)

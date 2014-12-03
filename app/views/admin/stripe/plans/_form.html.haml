@@ -50,8 +50,8 @@
           = label_tag(:plan_trial_period_days)
           = number_field_tag :plan_trial_period_days, plan.fetch(:trial_period_days, 0), :class => 'form-control', :default => 0
       %div.form-group
-        = label_tag(:info_title)
-        = text_field_tag :info_title, info[:title], :class => 'form-control'
+        =#  label_tag(:info_title)
+        =# text_field_tag :info_title, info[:title], :class => 'form-control'
       %div.form-group
         = label_tag(:info_summary)
         = text_field_tag :info_summary, info[:summary], :class => 'form-control'
