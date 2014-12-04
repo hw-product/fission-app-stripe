@@ -12,9 +12,7 @@ Rails.application.routes.draw do
       resources :discounts
     end
   end
-  resources :accounts do
-    scope :module => 'accounts' do
-      resources :subscriptions
-    end
+  namespace :account do
+    resources :subscriptions
   end
 end
