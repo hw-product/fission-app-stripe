@@ -35,10 +35,10 @@ class Account::SubscriptionsController < ApplicationController
         else
           @current_subscriptions = []
         end
-        if(Product.where(:vanity_dns => request.env['SERVER_NAME']).first)
-          products = [Product.where(:vanity_dns => request.env['SERVER_NAME']).first.name]
+        if(isolated_product?)
+          products = [@product.internal_name]
         else
-          products = Product.all.map(&:name)
+          products = Product.all.map(&:internal_name)
         end
         @plans = Stripe::Plan.all.to_a.find_all do |plan|
           products.include?(plan[:metadata][:fission_product])
@@ -149,6 +149,8 @@ class Account::SubscriptionsController < ApplicationController
       end
     end
   end
+
+  protected
 
   def fetch_stripe_customer
     current_user.run_state.stripe_customers ||= Stripe::Customer.all
