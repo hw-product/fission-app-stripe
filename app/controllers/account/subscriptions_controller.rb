@@ -11,8 +11,10 @@ class Account::SubscriptionsController < ApplicationController
       format.html do
         subscriptions = (fetch_stripe_customer || {}).to_hash.fetch(:subscriptions, {})
         @subscriptions = subscriptions.map do |subscription|
-          {:subscription => subscription,
-            :plan => Stripe::Plan.retrieve(subscription[:plan])}.with_indifferent_access
+          Smash.new(
+            :subscription => subscription,
+            :plan => Stripe::Plan.retrieve(subscription[:plan])
+          )
         end.sort do |hash|
           hash[:plan].metadata[:fission_product]
         end
@@ -24,7 +26,7 @@ class Account::SubscriptionsController < ApplicationController
     respond_to do |format|
       format.js do
         flash[:error] = 'Unsupported request!'
-        javascript_redirect_to account_path(param[:account_id])
+        javascript_redirect_to default_url
       end
       format.html do
         @customer = fetch_stripe_customer
@@ -78,7 +80,7 @@ class Account::SubscriptionsController < ApplicationController
     respond_to do |format|
       format.js do
         flash[:error] = 'Unsupported request!'
-        javscript_redirect_to account_subscriptions_path(:account_id => params[:account_id])
+        javscript_redirect_to account_subscriptions_path
       end
       format.html do
         begin
@@ -120,7 +122,7 @@ class Account::SubscriptionsController < ApplicationController
 
   def update
     flash[:error] = 'Unsupported request!'
-    redirect_url = account_subscriptions_path(:account_id => params[:account_id])
+    redirect_url = account_subscriptions_path
     respond_to do |format|
       format.js{ javascript_redirect_to redirect_url }
       format.html{ redirect_to redirect_url }
@@ -137,7 +139,7 @@ class Account::SubscriptionsController < ApplicationController
       Rails.logger.error "Failed to delete stripe subscription: #{e.class}: #{e}"
       Rails.logger.debug "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
     end
-    redirect_url = account_subscriptions_path(:account_id => params[:account_id])
+    redirect_url = account_subscriptions_path
     respond_to do |format|
       format.js do
         javascript_redirect_to redirect_url
@@ -151,7 +153,7 @@ class Account::SubscriptionsController < ApplicationController
   def fetch_stripe_customer
     current_user.run_state.stripe_customers ||= Stripe::Customer.all
     stripe = current_user.run_state.stripe_customers.detect do |customer|
-      customer.metadata[:fission_account_id] == @account.id
+      customer.metadata[:fission_account_id] == current_user.run_state.current_account.id
     end
     if(stripe && params[:stripeToken])
       stripe.card = params[:stripeToken]
@@ -164,8 +166,8 @@ class Account::SubscriptionsController < ApplicationController
     Stripe::Customer.create(
       :description => "Fission account for #{@account.name}",
       :metadata => {
-        :fission_account_id => @account.id,
-        :fission_account_name => @account.name
+        :fission_account_id => current_user.run_state.current_account.id,
+        :fission_account_name => current_user.run_state.current_account.name
       },
       :email => params[:stripeEmail],
       :card => params[:stripeToken]
