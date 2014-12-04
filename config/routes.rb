@@ -15,4 +15,5 @@ Rails.application.routes.draw do
   namespace :account do
     resources :subscriptions
   end
+  get '/pricing', :to => 'stripe#pricing', :as => :pricing
 end
