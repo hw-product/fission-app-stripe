@@ -1,4 +1,4 @@
-class Accounts::SubscriptionsController < ApplicationController
+class Account::SubscriptionsController < ApplicationController
 
   before_action :validate_access!, :only => []
 
