@@ -34,7 +34,7 @@ class Admin::Stripe::PlansController < ApplicationController
         javascript_redirect_to admin_stripe_plans_path
       end
       format.html do
-        @products = Product.all.map(&:name).sort
+        @products = Product.all.map(&:internal_name).sort
       end
     end
   end
@@ -85,7 +85,7 @@ class Admin::Stripe::PlansController < ApplicationController
         javascript_redirect_to admin_stripe_plans_path
       end
       format.html do
-        @products = Product.all.map(&:name).sort
+        @products = Product.all.map(&:internal_name).sort
         @info = Plan.find_by_remote_id(@plan.id) || {}
       end
     end
