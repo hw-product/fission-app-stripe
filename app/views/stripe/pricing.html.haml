@@ -17,5 +17,5 @@
               %div.plan-description= plan[:description]
             %div.panel-footer
               %div.center-block{:style => 'text-align:center'}
-                %button.btn.btn-info
+                %a.btn.btn-info{:href => current_user ? new_account_subscription_path : new_session_path}
                   Get Started!
