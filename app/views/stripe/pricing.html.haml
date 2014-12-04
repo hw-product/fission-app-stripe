@@ -1,0 +1,21 @@
+.container.container-padding
+  - @plans.each do |product, plans|
+    - unless isolated_product?
+      %div.row
+        %div.col-md-1
+        %div.col-md-11.product-group
+          %h3= product.humanize
+    %div.row
+      - plans.sort{|x,y| x[:amount] <=> y[:amount]}.each do |plan|
+        %div{:class => "col-md-#{12 / plans.size}"}
+          %div.panel.panel-default.pricing
+            %div.panel-heading
+              %h3= plan[:name].humanize
+            %div.panel-body
+              %div.plan-price= "#{number_to_currency(plan[:amount].to_i / 100.to_f, :precision => 0, :locale => :en)}/mo"
+              %div.plan-summary= plan[:summary]
+              %div.plan-description= plan[:description]
+            %div.panel-footer
+              %div.center-block{:style => 'text-align:center'}
+                %button.btn.btn-info
+                  Get Started!
