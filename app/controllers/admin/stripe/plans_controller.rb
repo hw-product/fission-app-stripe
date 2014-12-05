@@ -171,7 +171,7 @@ class Admin::Stripe::PlansController < ApplicationController
   def load_product_features
     respond_to do |format|
       format.js do
-        product = Product.find_by_name(params[:plan_fission_product])
+        product = Product.find_by_internal_name(params[:plan_fission_product])
         unless(params[:plan_id].blank?)
           @plan = Stripe::Plan.retrieve(params[:plan_id])
           @enabled = @plan[:metadata][:fission_product_features].to_s.split(',').map(&:to_i)
