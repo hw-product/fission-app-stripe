@@ -1,2 +1,4 @@
-%div#fission-stripe-plans.container.container-padding
-  = render :partial => 'admin/stripe/plans/list', :locals => {:plans => @plans}
+- content_for(:container) do
+  = render :partial => 'admin/stripe/plans/list', :locals => { :plans => @plans }
+
+= render(:partial => 'layouts/container', :locals => { :container_id => 'fission-stripe-plans' })
