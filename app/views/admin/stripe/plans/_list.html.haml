@@ -1,30 +1,25 @@
-%div.panel.panel-default
-  %div.panel-heading
-    %span.pull-right= link_to 'Create', new_admin_stripe_plan_path, :class => 'btn btn-success'
-    %span
-      %h4= defined?(title) ? title : 'Plans'
-  %div.clearfix
-  %div.panel-body
-    %table.table.table-hover
-      %thead
-        %tr
-          %th.col-md-3
-            Name
-          %th.col-md-3
-            ID
-          %th.col-md-5
-            Product
-          %th.col-md-1
-      %tbody
-        - plans.each do |plan|
-          %tr
-            %td= plan[:name]
-            %td= plan[:id]
-            %td= plan[:metadata][:fission_product]
-            %td
-              %a{:href => admin_stripe_plan_path(plan[:id])}
-                %span.glyphicon.glyphicon-zoom-in
-              %a{:href => edit_admin_stripe_plan_path(plan[:id])}
-                %span.glyphicon.glyphicon-cog
-              %a.window-rails{:href => '#', 'window-rails-ajax' => :delete, 'window-rails-url' => admin_stripe_plan_path(plan[:id]), 'window-rails-confirm' => "Destroy plan (#{plan[:name]})?", 'window-rails-title' => 'Plan destruction'}
-                %span.glyphicon.glyphicon-remove
+- content_for(:table_body) do
+  - plans.each do |plan|
+    %tr
+      %td= plan[:name]
+      %td= plan[:id]
+      %td= plan[:metadata][:fission_product]
+      %td
+        %a{:href => admin_stripe_plan_path(plan[:id])}
+          %span.glyphicon.glyphicon-zoom-in
+        %a{:href => edit_admin_stripe_plan_path(plan[:id])}
+          %span.glyphicon.glyphicon-cog
+        %a.window-rails{:href => '#', 'window-rails-ajax' => :delete, 'window-rails-url' => admin_stripe_plan_path(plan[:id]), 'window-rails-confirm' => "Destroy plan (#{plan[:name]})?", 'window-rails-title' => 'Plan destruction'}
+          %span.glyphicon.glyphicon-remove
+
+- content_for(:panel) do
+  - header_data = ['Name', 'ID', 'Product', '']
+  - header_classes = ['col-md-3', 'col-md-3', 'col-md-5', 'col-md-1']
+  = render(:partial => 'layouts/table', :locals => { :header_data => header_data, :header_classes => header_classes })
+
+- content_for(:heading) do
+  %span.pull-right= link_to 'Create', new_admin_stripe_plan_path, :class => 'btn btn-success'
+  %span
+    %h4= defined?(title) ? title : 'Plans'
+
+= render(:partial => 'layouts/panel', :locals => { :heading => content_for(:heading) })

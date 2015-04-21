@@ -1,26 +1,21 @@
-%div#fission-stripe-plan.container.container-padding
-  %div.panel.panel-default
-    %div.panel-heading
-      %h4= "Stripe plan #{@plan[:name]}"
-    %div.panel-body
-      %table.table
-        %thead
-          %tr.info
-            %th{:colspan => 2}
-              Plan details
-        %tbody
-          - @plan.keys.each do |key|
-            %tr
-              %td.col-md-3
-                %b= key.to_s.humanize
-              %td= @plan[key]
-        %thead
-          %tr.info
-            %th{:colspan => 2}
-              Display details
-        %tbody
-          - (@info.try(:keys) || []).each do |key|
-            %tr
-              %td.col-md-3
-                %b= key.to_s.humanize
-              %td= @info[key]
+- content_for(:heading) do
+  %h4= "Stripe plan #{@plan[:name]}"
+
+- content_for(:panel) do
+  - [['Plan details', @plan], ['Display details', @info]].each_with_index do |(title, obj), i|
+    - keys = obj.try(:keys) || []
+    - content_for("table#{i}_heading") do
+      %tr.info
+        %th{ :colspan => 2 }= title
+    - content_for("table#{i}_body") do
+      - keys.each do |key|
+        %tr
+          %td.col-md-3
+            %b= key.to_s.humanize
+          %td= obj[key]
+    = render(:partial => 'layouts/table', :locals => {:header_content_name => "table#{i}_heading", :table_content_name => "table#{i}_body" })
+
+- content_for(:container) do
+  = render(:partial => 'layouts/panel', :locals => { :heading => content_for(:heading) })
+
+= render(:partial => 'layouts/container', :locals => { :container_id => 'fission-stripe-plan' })

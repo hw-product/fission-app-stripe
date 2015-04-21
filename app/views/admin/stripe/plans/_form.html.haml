@@ -12,53 +12,57 @@
     method = :post
     button_text = 'Create'
   end
-%div.panel.panel-default
-  %div.panel-heading
-    %h4= title
-  %div.panel-body
-    = form_tag url, :method => method do
+
+- content_for(:heading) do
+  %h4= title
+
+- content_for(:panel) do
+  = form_tag url, :method => method do
+    %div.form-group
+      = label_tag(:plan_name)
+      = text_field_tag :plan_name, plan[:name], :class => 'form-control'
+    - unless(plan[:id])
       %div.form-group
-        = label_tag(:plan_name)
-        = text_field_tag :plan_name, plan[:name], :class => 'form-control'
-      - unless(plan[:id])
-        %div.form-group
-          = label_tag(:plan_id_id)
-          = text_field_tag :plan_id, nil, :class => 'form-control'
+        = label_tag(:plan_id_id)
+        = text_field_tag :plan_id, nil, :class => 'form-control'
+    %div.form-group
+      = label_tag(:plan_fission_product)
+      = select_tag :plan_fission_product, options_for_select(products), :class => 'form-control', :include_blank => true, 'sparkle-url' => load_product_features_admin_stripe_plans_path(:plan_id => plan[:id]), 'sparkle-serialize' => 'only-self', 'sparkle-ajax' => 'get'
+    %div.form-group
+      = label_tag(:plan_fission_product_features)
+      %div.checkbox#plan-product-features
+    %div.form-group
+      = label_tag(:plan_statement_description)
+      = text_field_tag :plan_statement_description, plan[:statement_description], :class => 'form-control'
+    - unless(plan[:id])
       %div.form-group
-        = label_tag(:plan_fission_product)
-        = select_tag :plan_fission_product, options_for_select(products), :class => 'form-control', :include_blank => true, 'sparkle-url' => load_product_features_admin_stripe_plans_path(:plan_id => plan[:id]), 'sparkle-serialize' => 'only-self', 'sparkle-ajax' => 'get'
+        = label_tag(:plan_currency)
+        = text_field_tag :plan_currency, plan.fetch(:currency, 'USD'), :class => 'form-control'
       %div.form-group
-        = label_tag(:plan_fission_product_features)
-        %div.checkbox#plan-product-features
+        = label_tag(:plan_amount)
+        = text_field_tag :plan_amount, plan[:amount], :class => 'form-control'
       %div.form-group
-        = label_tag(:plan_statement_description)
-        = text_field_tag :plan_statement_description, plan[:statement_description], :class => 'form-control'
-      - unless(plan[:id])
-        %div.form-group
-          = label_tag(:plan_currency)
-          = text_field_tag :plan_currency, plan.fetch(:currency, 'USD'), :class => 'form-control'
-        %div.form-group
-          = label_tag(:plan_amount)
-          = text_field_tag :plan_amount, plan[:amount], :class => 'form-control'
-        %div.form-group
-          = label_tag(:plan_interval)
-          = select_tag :plan_interval, options_for_select(['day', 'week', 'month', 'year'], plan.fetch(:interval, 'month')), :class => 'form-control'
-        %div.form-group
-          = label_tag(:plan_interval_count)
-          = number_field_tag :plan_interval_count, plan.fetch(:interval_count, 1), :class => 'form-control'
-        %div.form-group
-          = label_tag(:plan_trial_period_days)
-          = number_field_tag :plan_trial_period_days, plan.fetch(:trial_period_days, 0), :class => 'form-control', :default => 0
+        = label_tag(:plan_interval)
+        = select_tag :plan_interval, options_for_select(['day', 'week', 'month', 'year'], plan.fetch(:interval, 'month')), :class => 'form-control'
       %div.form-group
-        =#  label_tag(:info_title)
-        =# text_field_tag :info_title, info[:title], :class => 'form-control'
+        = label_tag(:plan_interval_count)
+        = number_field_tag :plan_interval_count, plan.fetch(:interval_count, 1), :class => 'form-control'
       %div.form-group
-        = label_tag(:info_summary)
-        = text_field_tag :info_summary, info[:summary], :class => 'form-control'
-      %div.form-group
-        = label_tag(:info_description)
-        = text_area_tag :info_description, info[:description], :class => 'form-control'
-      = submit_tag(button_text, :class => 'btn btn-success')
+        = label_tag(:plan_trial_period_days)
+        = number_field_tag :plan_trial_period_days, plan.fetch(:trial_period_days, 0), :class => 'form-control', :default => 0
+    %div.form-group
+      =#  label_tag(:info_title)
+      =# text_field_tag :info_title, info[:title], :class => 'form-control'
+    %div.form-group
+      = label_tag(:info_summary)
+      = text_field_tag :info_summary, info[:summary], :class => 'form-control'
+    %div.form-group
+      = label_tag(:info_description)
+      = text_area_tag :info_description, info[:description], :class => 'form-control'
+    = submit_tag(button_text, :class => 'btn btn-success')
+
+= render(:partial => 'layouts/panel', :locals => { :heading => content_for(:heading) })
+
 :javascript
   sparkle_ui.form.enable_updatable_selectors();
 - if plan[:metadata].try(:[], :fission_product)
