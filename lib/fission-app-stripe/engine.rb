@@ -15,24 +15,23 @@ module FissionApp
           Rails.logger.error 'No stripe credentials detected!'
           raise 'Missing stripe credentials!'
         end
+        Fission::Data::Models::Product.find_or_create(:name => 'Billing')
       end
 
       # @return [Array<Fission::Data::Models::Product>]
       def fission_product
-        [Fission::Data::Models::Product.find_by_internal_name('fission')]
+        [Fission::Data::Models::Product.find_by_internal_name('billing'),
+          Fission::Data::Models::Product.find_by_internal_name('fission')]
       end
 
       # @return [Hash] navigation
       def fission_navigation(*_)
-        Smash.new(
-          'Stripe' => Smash.new(
-            'Plans' => Rails.application.routes.url_for(
-              :controller => 'admin/stripe/plans',
-              :action => :index,
-              :only_path => true
-            )
-          )
-        )
+        Smash.new
+      end
+
+      # @return [Hash] account navigation
+      def fission_account_navigation(*_)
+        Smash.new('Billing' => Rails.application.routes.url_helpers.account_billing_path)
       end
 
     end
