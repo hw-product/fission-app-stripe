@@ -1,0 +1,3 @@
+.plan-price= "#{number_to_currency(plan[:instance].generated_cost, :precision => 0, :locale => :en)}/mo"
+.plan-summary= plan[:instance].summary
+.plan-description= plan[:description]
