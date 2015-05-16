@@ -11,13 +11,9 @@ class StripeController < ApplicationController
       end
       format.html do
         if(isolated_product?)
-          products = [@product.internal_name]
-        else
-          products = Product.all.map(&:internal_name)
+          product_id = @product.id
         end
-        @plans = Plan.order(:name).all.find_all do |plan|
-          (plan.products & products).empty?
-        end.sort_by(&:generated_cost)
+        @plans = Plan.order(:name).where(:product_id => product_id).all.sort_by(&:generated_cost)
         @plans.map! do |plan|
           result = Smash.new(:instance => plan)
           if(plan.description.present?)
@@ -26,7 +22,6 @@ class StripeController < ApplicationController
           end
           result
         end
-        @plans
       end
     end
   end
