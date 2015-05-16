@@ -3,6 +3,10 @@ class StripeController < ApplicationController
   before_action :validate_user!, :only => []
   before_action :validate_access!, :only => []
 
+  before_action do
+    @publish_key = Rails.application.config.stripe_publish_key
+  end
+
   def pricing
     respond_to do |format|
       format.js do
