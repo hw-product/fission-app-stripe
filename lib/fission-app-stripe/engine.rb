@@ -16,6 +16,17 @@ module FissionApp
           raise 'Missing stripe credentials!'
         end
         Fission::Data::Models::Product.find_or_create(:name => 'Billing')
+
+        c_b = Rails.application.config.settings.fetch(:callbacks, :before, :dashboard, :summary, Smash.new)
+        c_b[:buy_our_stuff!] = lambda do |*_|
+          unless(@account.customer_payment)
+            if(Rails.application.config.settings.fetch(:fission, :no_products_redirect, true))
+              redirect_to Rails.application.config.settings.fetch(:fission, :no_products_redirect, pricing_path)
+            end
+          end
+        end
+        Rails.application.config.settings.set(:callbacks, :before, :dashboard, :summary, c_b)
+
       end
 
       # @return [Array<Fission::Data::Models::Product>]
@@ -31,7 +42,7 @@ module FissionApp
 
       # @return [Hash] account navigation
       def fission_account_navigation(*_)
-        Smash.new('Billing' => Rails.application.routes.url_helpers.account_billing_path)
+        Smash.new('Billing' => Rails.application.routes.url_helpers.account_billing_details_path)
       end
 
     end
