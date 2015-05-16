@@ -6,8 +6,17 @@
           %h3= plan[:instance].name
         - content_for("footer-#{plan.object_id}") do
           .center-block{:style => 'text-align:center'}
-            %a.btn.btn-info{:href => current_user ? new_account_subscription_path : new_session_path}
-              Get Started!
+            - if !@account.customer_payment
+              = form_tag '/', :method => :post do
+                = hidden_field_tag :plan_id, plan[:instance].id
+                = javascript_include_tag 'https://checkout.stripe.com/checkout.js', :class => 'stripe-button', 'data-key' => @publish_key, 'data-image' => '/checkout-image.png', 'data-name' => plan[:instance].name, 'data-description' => plan[:instance].summary, 'data-amount' => plan[:instance].generated_cost(:integer), 'data-email' => @account.email || current_user.email, 'data-label' => 'Subscribe', 'data-panel-label' => 'Pay {{amount}}/mo'
+            - elsif @account.customer_payment.plans.include?(plan[:instance])
+              %a.btn.btn-success{:href => '#'}
+                Subscribed!
+            - else
+              %a.btn.btn-success{:href => '#'}
+                Upgrade!
+
         %div{:class => "col-md-#{12 / plans.size}"}
           :ruby
             locals = {
