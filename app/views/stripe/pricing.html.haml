@@ -1,3 +1,4 @@
+- is_upgrade = current_user.run_state.plans.empty?
 - content_for(:container) do
   - @plans.each_slice(3) do |plans|
     .row
@@ -6,16 +7,19 @@
           %h3= plan[:instance].name
         - content_for("footer-#{plan.object_id}") do
           .center-block{:style => 'text-align:center'}
-            - if !@account.customer_payment
+            - if @account.customer_payment.nil?
               = form_tag account_billing_order_path(plan[:instance].id), :method => :post do
                 = hidden_field_tag :plan_id, plan[:instance].id
                 = javascript_include_tag 'https://checkout.stripe.com/checkout.js', :class => 'stripe-button', 'data-key' => @publish_key, 'data-image' => '/checkout-image.png', 'data-name' => plan[:instance].name, 'data-description' => plan[:instance].summary, 'data-amount' => plan[:instance].generated_cost(:integer), 'data-email' => @account.email || current_user.email, 'data-label' => 'Subscribe', 'data-panel-label' => 'Pay {{amount}}/mo'
             - elsif current_user.run_state.plans.include?(plan[:instance])
               %a.btn.btn-success.disabled{:href => '#'}
                 Subscribed!
+              - is_upgrade = true
             - else
-              %a.btn.btn-success{:href => '#'}
-                Upgrade!
+              - if is_upgrade
+                = link_to('Upgrade!', account_billing_upgrade_path(:plan_id => plan[:instance].id), :class => 'btn btn-success')
+              - else
+                = link_to('Downgrade!', account_billing_downgrade_path(:plan_id => plan[:instance].id), :class => 'btn btn-danger')
 
         %div{:class => "col-md-#{12 / plans.size}"}
           :ruby
