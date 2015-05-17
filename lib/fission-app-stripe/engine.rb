@@ -19,9 +19,10 @@ module FissionApp
 
         c_b = Rails.application.config.settings.fetch(:callbacks, :before, :dashboard, :summary, Smash.new)
         c_b[:buy_our_stuff!] = lambda do |*_|
-          unless(@account.customer_payment)
+          if(current_user.run_state.plans.empty?)
             if(Rails.application.config.settings.fetch(:fission, :no_products_redirect, true))
               redirect_to Rails.application.config.settings.fetch(:fission, :no_products_redirect, pricing_path)
+              return false
             end
           end
         end
