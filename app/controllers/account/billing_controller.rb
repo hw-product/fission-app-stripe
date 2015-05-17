@@ -62,7 +62,7 @@ class Account::BillingController < ApplicationController
             flash[:error] = 'Failed to locate requested plan!'
           end
         end
-        redirect_to new_route_url
+        redirect_to dasboard_url
       end
     end
   end
