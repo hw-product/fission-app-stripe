@@ -1,7 +1,7 @@
 class Account::BillingController < ApplicationController
 
-  before_action :validate_user!, :except => [:order]
-  before_action :validate_access!, :except => [:order]
+  before_action :validate_user!, :except => [:order, :upgrade, :downgrade]
+  before_action :validate_access!, :except => [:order, :upgrade, :downgrade]
 
   before_action do
     @publish_key = Rails.application.config.stripe_publish_key
@@ -74,7 +74,15 @@ class Account::BillingController < ApplicationController
         redirect_to dashboard_url
       end
       format.html do
-
+        current_plans = Plan.where(:id => @account.customer_payment.plan_ids).all
+        upgrade_plan = Plan.find_by_id(params[:plan_id])
+        if(upgrade_plan)
+          modify_plan(upgrade_plan, current_plans)
+          flash[:success] = "Upgrade order successfully completed (Plan: #{@plan.name})"
+        else
+          flash[:error] = 'Failed to locate requested plan!'
+        end
+        redirect_to dashboard_url
       end
     end
   end
@@ -86,9 +94,48 @@ class Account::BillingController < ApplicationController
         redirect_to dashboard_url
       end
       format.html do
-
+        current_plans = Plan.where(:id => @account.customer_payment.plan_ids).all
+        upgrade_plan = Plan.find_by_id(params[:plan_id])
+        if(upgrade_plan)
+          modify_plan(upgrade_plan, current_plans)
+          flash[:warning] = "Downgrade order successfully completed (Plan: #{@plan.name})"
+        else
+          flash[:error] = 'Failed to locate requested plan!'
+        end
+        redirect_to dashboard_url
       end
     end
+  end
+
+  protected
+
+  def modify_plan(upgrade_plan, current_plans)
+    matching_plans = current_plans.find_all do |c_plan|
+      c_plan.product_id == upgrade_plan.product_id
+    end
+    final_plans = current_plans - matching_plans + [upgrade_plan]
+    stripe_customer = Stripe::Customer.retrieve(@account.customer_payment.customer_id)
+    current_stripe_subscription = stripe_customer.subscriptions.all.first
+    current_stripe_plan = current_stripe_subscription.plan
+    stripe_plan = Stripe::Plan.create(
+      :id => SecureRandom.uuid,
+      :name => "Heavy Water Products plan for account: #{@account.name}",
+      :amount => final_plans.map{|pln| pln.generated_cost(:integer)}.inject(&:+),
+      :currency => 'usd',
+      :interval => 'month',
+      :metadata => {
+        :fission_account_id => @account.id,
+        :fission_plans => final_plans.map(&:id).map(&:to_s).join(',')
+      }
+    )
+    current_stripe_subscription.plan = stripe_plan.id
+    current_stripe_subscription.save
+    begin
+      current_stripe_plan.delete
+    rescue Stripe::InvalidRequestError => e
+      Rails.logger.error "Failed to remove deprecated account plan: #{e.class} - #{e}"
+    end
+    @plan = upgrade_plan
   end
 
 end
