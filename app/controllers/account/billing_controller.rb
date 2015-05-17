@@ -29,8 +29,8 @@ class Account::BillingController < ApplicationController
         if(@account.customer_payment)
           flash[:error] = 'Failed to create payment account. Account already exists!'
         else
-          plan = Plan.find_by_id(params[:plan_id])
-          if(plan)
+          @plan = Plan.find_by_id(params[:plan_id])
+          if(@plan)
             stripe_customer = Stripe::Customer.create(
               :description => "Heavy Water Fission account for #{@account.name}",
               :metadata => {
@@ -48,21 +48,21 @@ class Account::BillingController < ApplicationController
             stripe_plan = Stripe::Plan.create(
               :id => SecureRandom.uuid,
               :name => "#{@product ? @product.name : 'Fission'} plan for account: #{@account.name}",
-              :amount => plan.generated_cost(:integer),
+              :amount => @plan.generated_cost(:integer),
               :currency => 'usd',
               :interval => 'month',
               :metadata => {
                 :fission_account_id => @account.id,
-                :fission_plans => plan.id.to_s
+                :fission_plans => @plan.id.to_s
               }
             )
             stripe_customer.subscriptions.create(:plan => stripe_plan.id)
-            flash[:success] = "Order successfully completed (Plan: #{plan.name})"
+            flash[:success] = "Order successfully completed (Plan: #{@plan.name})"
           else
             flash[:error] = 'Failed to locate requested plan!'
           end
         end
-        redirect_to dasboard_url
+        redirect_to dashboard_url
       end
     end
   end
