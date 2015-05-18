@@ -15,7 +15,20 @@ module FissionApp
           Rails.logger.error 'No stripe credentials detected!'
           raise 'Missing stripe credentials!'
         end
-        Fission::Data::Models::Product.find_or_create(:name => 'Billing')
+
+        Fission::Data::Models::Product.find_or_create(:name => 'Fission')
+        product = Fission::Data::Models::Product.find_or_create(:name => 'Billing')
+        feature = Fission::Data::Models::ProductFeature.find_or_create(
+          :name => 'Account Billing',
+          :product_id => product.id
+        )
+        permission = Fission::Data::Models::Permission.find_or_create(
+          :name => 'Account billing access',
+          :pattern => '/billing.*'
+        )
+        unless(feature.permissions.include?(permission))
+          feature.add_permission(permission)
+        end
 
         c_b = Rails.application.config.settings.fetch(:callbacks, :before, :dashboard, :summary, Smash.new)
         c_b[:buy_our_stuff!] = lambda do |*_|
