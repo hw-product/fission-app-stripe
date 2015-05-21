@@ -1,3 +1,7 @@
+## v0.2.4
+* Refactor so every account has custom plan
+* Add lots of plan related stuff
+
 ## v0.2.2
 * View refactor
 
