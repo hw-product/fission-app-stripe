@@ -1,3 +1,6 @@
+## v0.2.6
+* Remove return from callback block
+
 ## v0.2.4
 * Refactor so every account has custom plan
 * Add lots of plan related stuff
