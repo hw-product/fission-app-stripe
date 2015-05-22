@@ -35,7 +35,6 @@ module FissionApp
           if(current_user.run_state.plans.empty?)
             if(Rails.application.config.settings.fetch(:fission, :no_products_redirect, true))
               redirect_to Rails.application.config.settings.fetch(:fission, :no_products_redirect, pricing_path)
-              return false
             end
           end
         end
