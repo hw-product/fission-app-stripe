@@ -14,7 +14,14 @@ class Account::BillingController < ApplicationController
         redirect_to dashboard_url
       end
       format.html do
-
+        @payment = @account.customer_payment.remote_data
+        @card = @payment.get(:cards, :data).first
+        @line_items = Smash.new(
+          :plans => (@payment.fetch(:subscriptions, :data, []).first || [])
+            .fetch(:plan, :metadata, :fission_breakdown, :plans, Smash.new),
+          :pipelines => (@payment.fetch(:subscriptions, :data, []).first || [])
+            .fetch(:plan, :metadata, :fission_breakdown, :pipelines, Smash.new)
+        )
       end
     end
   end
@@ -47,12 +54,20 @@ class Account::BillingController < ApplicationController
             )
             stripe_plan = Stripe::Plan.create(
               :id => SecureRandom.uuid,
-              :name => "#{@product ? @product.name : 'Fission'} plan for account: #{@account.name}",
+              :name => "Fission plan for account: #{@account.name}",
               :amount => @plan.generated_cost(:integer),
               :currency => 'usd',
               :interval => 'month',
               :metadata => {
                 :fission_account_id => @account.id,
+                :fission_breakdown => {
+                  :plans => {
+                    @plan.id => {
+                      :name => @plan.name,
+                      :cost => @plan.generated_cost(&:integer)
+                    }
+                  }
+                },
                 :fission_plans => @plan.id.to_s
               }
             )
@@ -125,7 +140,17 @@ class Account::BillingController < ApplicationController
       :interval => 'month',
       :metadata => {
         :fission_account_id => @account.id,
-        :fission_plans => final_plans.map(&:id).map(&:to_s).join(',')
+        :fission_plans => final_plans.map(&:id).map(&:to_s).join(','),
+        :fission_breakdown => {
+          :plans => Smash.new.tap{|plns|
+            final_plans.each{|plan|
+              plns[plan.id] = {
+                :name => plan.name,
+                :cost => plan.generated_cost(&:integer)
+              }
+            }
+          }
+        }
       }
     )
     current_stripe_subscription.plan = stripe_plan.id

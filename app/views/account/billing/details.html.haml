@@ -1,0 +1,44 @@
+- content_for(:container) do
+  .row
+    .col-md-8
+      .panel.panel-primary
+        .panel-heading= "Billing Details [#{@account.name}]"
+        .panel-body
+          %table.table
+            - if @line_items[:plans]
+              %thead
+                %tr
+                  %th{:colspan => 2}
+              %tbody
+                - @line_items[:plans].each do |plan_id, plan_info|
+                  %tr
+                    %td
+                      %b= plan_info[:name]
+                    %td= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
+                - if @line_items[:pipelines]
+                  - @line_items[:pipelines].each do |route_id, route_info|
+                    %tr
+                      %td
+                        %b= plan_info[:name]
+                      %td= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
+    .col-md-4
+      .row
+        .col-md-12
+          .panel.panel-default
+            .panel-heading
+              Payment Information
+            %table.table
+              %tr
+                %td
+                  %b
+                    Credit card
+                %td
+                  %p= "****-****-****-#{@card[:last4]} #{@card[:exp_month]}/#{@card[:exp_year]}"
+              %tr
+                %td
+                  %b
+                    Amount
+                %td
+                  %p= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount), :precision => 0, :locale => :en)}/mo"
+
+= render(:partial => 'layouts/container')
