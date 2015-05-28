@@ -14,14 +14,14 @@ class Account::BillingController < ApplicationController
         redirect_to dashboard_url
       end
       format.html do
-        @payment = @account.customer_payment.remote_data
+        c_payment = @account.customer_payment
+        @payment = c_payment.remote_data
         @card = @payment.get(:cards, :data).first
         @line_items = Smash.new(
-          :plans => (@payment.fetch(:subscriptions, :data, []).first || [])
-            .fetch(:plan, :metadata, :fission_breakdown, :plans, Smash.new),
-          :pipelines => (@payment.fetch(:subscriptions, :data, []).first || [])
-            .fetch(:plan, :metadata, :fission_breakdown, :pipelines, Smash.new)
+          :plans => c_payment.metadata[:breakdown].fetch(:plans, Smash.new),
+          :pipelines => c_payment.metadata[:breakdown].fetch(:pipelines, Smash.new)
         )
+        @past_due = @payment[:delinquent]
       end
     end
   end
@@ -60,17 +60,17 @@ class Account::BillingController < ApplicationController
               :interval => 'month',
               :metadata => {
                 :fission_account_id => @account.id,
-                :fission_breakdown => {
-                  :plans => {
-                    @plan.id => {
-                      :name => @plan.name,
-                      :cost => @plan.generated_cost(&:integer)
-                    }
-                  }
-                },
                 :fission_plans => @plan.id.to_s
               }
             )
+            payment.metadata[:breakdown] ||= {}
+            payment.metadata[:breakdown][:plans] = {
+              @plan.id => {
+                :name => @plan.name,
+                :cost => @plan.generated_cost(&:integer)
+              }
+            }
+            payment.save
             stripe_customer.subscriptions.create(:plan => stripe_plan.id)
             flash[:success] = "Order successfully completed (Plan: #{@plan.name})"
           else
@@ -129,6 +129,7 @@ class Account::BillingController < ApplicationController
       c_plan.product_id == upgrade_plan.product_id
     end
     final_plans = current_plans - matching_plans + [upgrade_plan]
+    payment = @account.customer_payment
     stripe_customer = Stripe::Customer.retrieve(@account.customer_payment.customer_id)
     current_stripe_subscription = stripe_customer.subscriptions.all.first
     current_stripe_plan = current_stripe_subscription.plan
@@ -140,19 +141,18 @@ class Account::BillingController < ApplicationController
       :interval => 'month',
       :metadata => {
         :fission_account_id => @account.id,
-        :fission_plans => final_plans.map(&:id).map(&:to_s).join(','),
-        :fission_breakdown => {
-          :plans => Smash.new.tap{|plns|
-            final_plans.each{|plan|
-              plns[plan.id] = {
-                :name => plan.name,
-                :cost => plan.generated_cost(&:integer)
-              }
-            }
-          }
-        }
+        :fission_plans => final_plans.map(&:id).map(&:to_s).join(',')
       }
     )
+    payment.metadata[:breakdown][:plans] = Smash.new.tap do |plns|
+      final_plans.each do |plan|
+        plns[plan.id] = {
+          :name => plan.name,
+          :cost => plan.generated_cost(&:integer)
+        }
+      end
+    end
+    payment.save
     current_stripe_subscription.plan = stripe_plan.id
     current_stripe_subscription.save
     begin

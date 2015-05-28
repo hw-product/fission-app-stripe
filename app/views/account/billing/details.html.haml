@@ -5,26 +5,33 @@
         .panel-heading= "Billing Details [#{@account.name}]"
         .panel-body
           %table.table
-            - if @line_items[:plans]
+            - if !@line_items[:plans].empty?
               %thead
                 %tr
                   %th{:colspan => 2}
+                    Subscribed Plans
               %tbody
                 - @line_items[:plans].each do |plan_id, plan_info|
                   %tr
                     %td
                       %b= plan_info[:name]
-                    %td= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
-                - if @line_items[:pipelines]
-                  - @line_items[:pipelines].each do |route_id, route_info|
-                    %tr
-                      %td
-                        %b= plan_info[:name]
-                      %td= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
+                    %td{:style => 'text-align: right'}= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
+            - if !@line_items[:pipelines].empty?
+              %thead
+                %tr
+                  %th{:colspan => 2}
+                    Enabled Pipelines
+              %tbody
+                - @line_items[:pipelines].each do |route_id, route_info|
+                  %tr
+                    %td
+                      %b= plan_info[:name]
+                    %td{:style => 'text-align: right'}= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
     .col-md-4
       .row
+        %br
         .col-md-12
-          .panel.panel-default
+          .panel{:class => @past_due ? 'panel-danger' : 'panel-success'}
             .panel-heading
               Payment Information
             %table.table
@@ -32,13 +39,17 @@
                 %td
                   %b
                     Credit card
-                %td
-                  %p= "****-****-****-#{@card[:last4]} #{@card[:exp_month]}/#{@card[:exp_year]}"
+                  %span.label.label-info= @card[:brand]
+                %td{:style => 'text-align: right'}
+                  %b= "****-****-****-#{@card[:last4]}"
+                  %br
+                  Expires:
+                  %b= "#{@card[:exp_month]}/#{@card[:exp_year]}"
               %tr
                 %td
                   %b
-                    Amount
-                %td
-                  %p= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount), :precision => 0, :locale => :en)}/mo"
+                    Current Rate
+                %td{:style => 'text-align: right'}
+                  %p= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
 
 = render(:partial => 'layouts/container')
