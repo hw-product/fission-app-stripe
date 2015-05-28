@@ -8,25 +8,47 @@
             - if !@line_items[:plans].empty?
               %thead
                 %tr
-                  %th{:colspan => 2}
+                  %th
                     Subscribed Plans
               %tbody
                 - @line_items[:plans].each do |plan_id, plan_info|
                   %tr
                     %td
-                      %b= plan_info[:name]
-                    %td{:style => 'text-align: right'}= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
+                      .row
+                        .col-md-3
+                          %b= plan_info[:name]
+                        .col-md-8{:style => 'text-align: right'}= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
+                        .col-md-1
+                          %center
+                            = link_to yield(:delete_icon), '#'
+
             - if !@line_items[:pipelines].empty?
               %thead
                 %tr
-                  %th{:colspan => 2}
+                  %th
                     Enabled Pipelines
               %tbody
                 - @line_items[:pipelines].each do |route_id, route_info|
                   %tr
                     %td
-                      %b= plan_info[:name]
-                    %td{:style => 'text-align: right'}= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
+                      .row
+                        .col-md-3
+                          %b= plan_info[:name]
+                        .col-md-8{:style => 'text-align: right'}= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
+                        .col-md-1
+                          %center
+                            = link_to yield(:delete_icon), '#'
+          .row
+            .col-md-9
+            .col-md-3
+              .alert-success
+                %center
+                  Total:
+                  %b= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
+        .panel-footer.bg-info
+          .div.pull-right
+            = yield :ok_icon
+          .clearfix
     .col-md-4
       .row
         %br
@@ -34,11 +56,13 @@
           .panel{:class => @past_due ? 'panel-danger' : 'panel-success'}
             .panel-heading
               Payment Information
+              = link_to yield(:edit_icon), '#', :class => 'pull-right'
+              .clearfix
             %table.table
               %tr
                 %td
                   %b
-                    Credit card
+                    Credit card:
                   %span.label.label-info= @card[:brand]
                 %td{:style => 'text-align: right'}
                   %b= "****-****-****-#{@card[:last4]}"
@@ -48,8 +72,8 @@
               %tr
                 %td
                   %b
-                    Current Rate
+                    Current Rate:
                 %td{:style => 'text-align: right'}
-                  %p= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
+                  %b= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
 
 = render(:partial => 'layouts/container')
