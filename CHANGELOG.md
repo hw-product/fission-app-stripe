@@ -1,3 +1,6 @@
+# v0.2.10
+* Update configuration keys used for auto-redirects
+
 # v0.2.8
 * Fix plans display when user not logged in
 * Begin account billing support
