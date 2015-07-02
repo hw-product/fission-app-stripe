@@ -1,3 +1,6 @@
+# v0.2.12
+* Move configuration for redirects to root level
+
 # v0.2.10
 * Update configuration keys used for auto-redirects
 
