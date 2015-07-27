@@ -1,3 +1,6 @@
+# v0.2.14
+* [fix] Prevent name collisions on product init
+
 # v0.2.12
 * Move configuration for redirects to root level
 
