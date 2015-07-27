@@ -16,8 +16,8 @@ module FissionApp
           raise 'Missing stripe credentials!'
         end
 
-        Fission::Data::Models::Product.find_or_create(:name => 'Fission')
-        product = Fission::Data::Models::Product.find_or_create(:name => 'Billing')
+        FissionApp.init_product(:fission)
+        product = FissionApp.init_product(:billing)
         feature = Fission::Data::Models::ProductFeature.find_or_create(
           :name => 'Account Billing',
           :product_id => product.id
