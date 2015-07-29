@@ -54,8 +54,12 @@ module FissionApp
       end
 
       # @return [Hash] account navigation
-      def fission_account_navigation(*_)
-        Smash.new('Billing' => Rails.application.routes.url_helpers.account_billing_details_path)
+      def fission_account_navigation(product, *_)
+        if(product.internal_name == 'billing')
+          Smash.new('Billing' => Rails.application.routes.url_helpers.account_billing_details_path)
+        else
+          Smash.new
+        end
       end
 
     end
