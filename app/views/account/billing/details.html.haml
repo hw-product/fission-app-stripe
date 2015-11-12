@@ -56,7 +56,8 @@
           .panel{:class => @past_due ? 'panel-danger' : 'panel-success'}
             .panel-heading
               Payment Information
-              = link_to yield(:edit_icon), '#', :class => 'pull-right'
+              =# link_to yield(:delete_icon), '#', :class => 'pull-right'
+              = link_to yield(:edit_icon), '#', :class => 'pull-right', :id => 'card-edit'
               .clearfix
             %table.table
               %tr
@@ -77,3 +78,31 @@
                   %b= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
 
 = render(:partial => 'layouts/container')
+
+= javascript_include_tag 'https://checkout.stripe.com/checkout.js'
+
+:javascript
+  var handler = StripeCheckout.configure({
+    key: '#{@publish_key}',
+    locale: 'auto',
+    token: function(token){
+      $.post(
+        '#{account_billing_edit_path}', {
+          token: token.id
+        }
+      );
+    }
+  });
+
+  $('#card-edit').on('click', function(elm){
+    handler.open({
+      name: 'Update Card',
+      image: '/checkout-image.png',
+      'panel-label': 'Update',
+      'allow-remember-me': false,
+      email: '#{@payment.email}'
+    });
+    elm.preventDefault();
+  });
+
+  $(window).on('popstate', function(){ handler.close(); });

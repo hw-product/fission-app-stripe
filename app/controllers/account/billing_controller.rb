@@ -11,12 +11,12 @@ class Account::BillingController < ApplicationController
     respond_to do |format|
       format.js do
         flash[:error] = 'Unsupported request!'
-        redirect_to dashboard_url
+        javascript_redirect_to dashboard_url
       end
       format.html do
         c_payment = @account.customer_payment
         @payment = c_payment.remote_data
-        @card = @payment.get(:cards, :data).first
+        @card = @payment.fetch(:cards, :data, @payment.fetch(:sources, :data, [])).first || {}
         @line_items = Smash.new(
           :plans => c_payment.metadata[:breakdown].fetch(:plans, Smash.new),
           :pipelines => c_payment.metadata[:breakdown].fetch(:pipelines, Smash.new)
@@ -26,11 +26,28 @@ class Account::BillingController < ApplicationController
     end
   end
 
+  def card_edit
+    respond_to do |format|
+      format.js do
+        payment = @account.customer_payment
+        stripe_customer = Stripe::Customer.retrieve(@account.customer_payment.customer_id)
+        stripe_customer.source = params[:token]
+        stripe_customer.save
+        flash[:success] = 'New credit card information has been saved!'
+        javascript_redirect_to account_billing_details_path
+      end
+      format.html do
+        flash[:error] = 'Unsupported request!'
+        redirect_to dashboard_url
+      end
+    end
+  end
+
   def order
     respond_to do |format|
       format.js do
         flash[:error] = 'Unsupported request!'
-        redirect_to dashboard_url
+        javascript_redirect_to dashboard_url
       end
       format.html do
         if(@account.customer_payment)
@@ -65,7 +82,7 @@ class Account::BillingController < ApplicationController
             )
             payment.metadata[:breakdown] ||= {}
             payment.metadata[:breakdown][:plans] = {
-              @plan.id => {
+              @plan.id.to_s => {
                 :name => @plan.name,
                 :cost => @plan.generated_cost(&:integer)
               }
@@ -86,7 +103,7 @@ class Account::BillingController < ApplicationController
     respond_to do |format|
       format.js do
         flash[:error] = 'Unsupported request!'
-        redirect_to dashboard_url
+        javascript_redirect_to dashboard_url
       end
       format.html do
         current_plans = Plan.where(:id => @account.customer_payment.plan_ids).all
@@ -106,7 +123,7 @@ class Account::BillingController < ApplicationController
     respond_to do |format|
       format.js do
         flash[:error] = 'Unsupported request!'
-        redirect_to dashboard_url
+        javascript_redirect_to dashboard_url
       end
       format.html do
         current_plans = Plan.where(:id => @account.customer_payment.plan_ids).all
@@ -132,7 +149,9 @@ class Account::BillingController < ApplicationController
     payment = @account.customer_payment
     stripe_customer = Stripe::Customer.retrieve(@account.customer_payment.customer_id)
     current_stripe_subscription = stripe_customer.subscriptions.all.first
-    current_stripe_plan = current_stripe_subscription.plan
+    if(current_stripe_subscription)
+      current_stripe_plan = current_stripe_subscription.plan
+    end
     stripe_plan = Stripe::Plan.create(
       :id => SecureRandom.uuid,
       :name => "Heavy Water Products plan for account: #{@account.name}",
@@ -144,19 +163,24 @@ class Account::BillingController < ApplicationController
         :fission_plans => final_plans.map(&:id).map(&:to_s).join(',')
       }
     )
+    payment.metadata[:breakdown] ||= Smash.new
     payment.metadata[:breakdown][:plans] = Smash.new.tap do |plns|
       final_plans.each do |plan|
-        plns[plan.id] = {
+        plns[plan.id.to_s] = {
           :name => plan.name,
           :cost => plan.generated_cost(&:integer)
         }
       end
     end
     payment.save
-    current_stripe_subscription.plan = stripe_plan.id
-    current_stripe_subscription.save
+    if(current_stripe_subscription)
+      current_stripe_subscription.plan = stripe_plan.id
+      current_stripe_subscription.save
+    else
+      current_stripe_subscription = stripe_customer.subscriptions.create(:plan => stripe_plan.id)
+    end
     begin
-      current_stripe_plan.delete
+      current_stripe_plan.delete if current_stripe_plan
     rescue Stripe::InvalidRequestError => e
       Rails.logger.error "Failed to remove deprecated account plan: #{e.class} - #{e}"
     end
