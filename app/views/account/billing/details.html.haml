@@ -10,17 +10,17 @@
                 %tr
                   %th
                     Subscribed Plans
-              %tbody
+              %tbody.plans
                 - @line_items[:plans].each do |plan_id, plan_info|
                   %tr
-                    %td
+                    %td.plan.enabled{'data-plan' => plan_id, 'data-plan-cost' => plan_info[:cost]}
                       .row
                         .col-md-3
                           %b= plan_info[:name]
                         .col-md-8{:style => 'text-align: right'}= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
                         .col-md-1
                           %center
-                            = link_to yield(:delete_icon), '#'
+                            = link_to yield(:delete_icon), '#', :class => 'plan-delete'
 
             - if !@line_items[:pipelines].empty?
               %thead
@@ -44,10 +44,10 @@
               .alert-success
                 %center
                   Total:
-                  %b= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
+                  %b#details-rate= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
         .panel-footer.bg-info
           .div.pull-right
-            = yield :ok_icon
+            = link_to yield(:ok_icon), '#', :id => 'billing-update', :class => 'window-rails', 'window-rails-callback' => 'billing_update', 'window-rails-confirm' => 'Update account subscriptions?', 'window-rails-title' => 'Billing Update'
           .clearfix
     .col-md-4
       .row
@@ -81,28 +81,74 @@
 
 = javascript_include_tag 'https://checkout.stripe.com/checkout.js'
 
+:css
+  .disabled{
+    color: darkred;
+    font-weight: bold;
+    background-color: pink;
+  }
+
 :javascript
-  var handler = StripeCheckout.configure({
-    key: '#{@publish_key}',
-    locale: 'auto',
-    token: function(token){
-      $.post(
-        '#{account_billing_edit_path}', {
-          token: token.id
-        }
-      );
-    }
-  });
 
-  $('#card-edit').on('click', function(elm){
-    handler.open({
-      name: 'Update Card',
-      image: '/checkout-image.png',
-      'panel-label': 'Update',
-      'allow-remember-me': false,
-      email: '#{@payment.email}'
+  function billing_update(){
+    plans = $('td.plan.enabled').map(function(){
+      return $(this).attr('data-plan');
+    }).toArray();
+    $.post(
+      '#{account_billing_modify_path}', {
+        plan_ids: plans
+      }
+    );
+  }
+
+  function calculate_billing(){
+    total = 0;
+    $('td.plan.enabled').each(function(){
+      total = total + Number($(this).attr('data-plan-cost'));
     });
-    elm.preventDefault();
-  });
+    $('#details-rate').html('$' + total.toFixed(2) + '/mo');
+  }
 
-  $(window).on('popstate', function(){ handler.close(); });
+
+  function billing_setup(){
+    var handler = StripeCheckout.configure({
+      key: '#{@publish_key}',
+      locale: 'auto',
+      token: function(token){
+        $.post(
+          '#{account_billing_edit_path}', {
+            token: token.id
+          }
+        );
+      }
+    });
+
+    $('#card-edit').on('click', function(elm){
+      handler.open({
+        name: 'Update Card',
+        image: '/checkout-image.png',
+        'panel-label': 'Update',
+        'allow-remember-me': false,
+        email: '#{@payment.email}'
+      });
+      elm.preventDefault();
+    });
+
+    $(window).on('popstate', function(){ handler.close(); });
+
+    $('.plan-delete').click(function(){
+      table_row = $(this).parents().find('.plan');
+      if(table_row.hasClass('enabled')){
+        table_row.removeClass('enabled');
+        table_row.addClass('disabled');
+      } else {
+        table_row.removeClass('disabled');
+        table_row.addClass('enabled');
+      }
+      calculate_billing();
+    });
+
+  }
+
+  $(document).ready(billing_setup);
+  $(document).on('page:load', billing_setup);
