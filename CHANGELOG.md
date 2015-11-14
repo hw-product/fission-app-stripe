@@ -1,3 +1,6 @@
+# v0.2.16
+* [feature] Provide customer billing modification
+
 # v0.2.14
 * [fix] Prevent name collisions on product init
 
