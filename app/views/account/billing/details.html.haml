@@ -44,7 +44,10 @@
               .alert-success
                 %center
                   Total:
-                  %b#details-rate= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
+                  - if @payment.get(:subscriptions, :data).first
+                    %b#details-rate= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
+                  - else
+                    %b#details-rate= "#{number_to_currency(0, :precision => 0, :locale => :en)}/mo"
         .panel-footer.bg-info
           .div.pull-right
             = link_to yield(:ok_icon), '#', :id => 'billing-update', :class => 'window-rails', 'window-rails-callback' => 'billing_update', 'window-rails-confirm' => 'Update account subscriptions?', 'window-rails-title' => 'Billing Update'
@@ -75,7 +78,10 @@
                   %b
                     Current Rate:
                 %td{:style => 'text-align: right'}
-                  %b= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
+                  - if @payment.get(:subscriptions, :data).first
+                    %b= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
+                  - else
+                    %b= "#{number_to_currency(0, :precision => 0, :locale => :en)}/mo"
 
 = render(:partial => 'layouts/container')
 
@@ -137,7 +143,7 @@
     $(window).on('popstate', function(){ handler.close(); });
 
     $('.plan-delete').click(function(){
-      table_row = $(this).parents().find('.plan');
+      table_row = $(this).parents('td.plan');
       if(table_row.hasClass('enabled')){
         table_row.removeClass('enabled');
         table_row.addClass('disabled');
