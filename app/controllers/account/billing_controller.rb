@@ -23,6 +23,7 @@ class Account::BillingController < ApplicationController
             :pipelines => c_payment.metadata[:breakdown].fetch(:pipelines, Smash.new)
           )
           @past_due = @payment[:delinquent]
+          @can_delete = @line_items.values.all?{|i| i.empty?}
         else
           flash[:error] = 'No payment information exists for this account!'
           redirect_to dashboard_path

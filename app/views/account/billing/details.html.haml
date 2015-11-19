@@ -78,7 +78,8 @@
               Payment Information
               %span.pull-right
                 = link_to yield(:edit_icon), '#', :id => 'card-edit'
-                = link_to yield(:delete_icon), '#', :id => 'card-delete', :class => 'window-rails', 'window-rails-ajax' => 'delete', 'window-rails-url' => account_billing_card_delete_path, 'window-rails-confirm' => 'Delete credit card from this account?', 'window-rails-title' => 'Delete payment information'
+                - if @can_delete
+                  = link_to yield(:delete_icon), '#', :id => 'card-delete', :class => 'window-rails', 'window-rails-ajax' => 'delete', 'window-rails-url' => account_billing_card_delete_path, 'window-rails-confirm' => 'Delete credit card from this account?', 'window-rails-title' => 'Delete payment information'
               .clearfix
             %table.table
               %tr
