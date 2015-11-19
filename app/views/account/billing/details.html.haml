@@ -5,6 +5,23 @@
         .panel-heading= "Billing Details [#{@account.name}]"
         .panel-body
           %table.table
+            - if !@line_items[:new_plans].blank?
+              %thead
+                %tr
+                  %th
+                    New Plans (pending)
+              %tbody.plans.new
+                - @line_items[:new_plans].each do |plan_id, plan_info|
+                  %tr
+                    %td.plan.enabled{'data-plan' => plan_id, 'data-plan-cost' => plan_info[:cost]}
+                      .row
+                        .col-md-3
+                          %b= plan_info[:name]
+                        .col-md-8{:style => 'text-align: right'}= "#{number_to_currency(plan_info[:cost], :precision => 0, :locale => :en)}/mo"
+                        .col-md-1
+                          %center
+                            = link_to yield(:delete_icon), '#', :class => 'plan-delete'
+
             - if !@line_items[:plans].empty?
               %thead
                 %tr
@@ -109,7 +126,7 @@
 
   function calculate_billing(){
     total = 0;
-    $('td.plan.enabled').each(function(){
+    $('td.enabled').each(function(){
       total = total + Number($(this).attr('data-plan-cost'));
     });
     $('#details-rate').html('$' + total.toFixed(2) + '/mo');
@@ -154,6 +171,7 @@
       calculate_billing();
     });
 
+    calculate_billing();
   }
 
   $(document).ready(billing_setup);

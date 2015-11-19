@@ -1,7 +1,7 @@
 class Account::BillingController < ApplicationController
 
-  before_action :validate_user!, :except => [:order, :upgrade, :downgrade]
-  before_action :validate_access!, :except => [:order, :upgrade, :downgrade]
+  before_action :validate_user!, :except => [:order, :upgrade, :downgrade, :modify]
+  before_action :validate_access!, :except => [:order, :upgrade, :downgrade, :modify]
 
   before_action do
     @publish_key = Rails.application.config.stripe_publish_key
@@ -50,96 +50,44 @@ class Account::BillingController < ApplicationController
         javascript_redirect_to account_billing_details_path
       end
       format.html do
-        if(@account.customer_payment)
-          flash[:error] = 'Failed to create payment account. Account already exists!'
-        else
-          @plan = Plan.find_by_id(params[:plan_id])
-          if(@plan)
-            stripe_customer = Stripe::Customer.create(
-              :description => "Heavy Water Fission account for #{@account.name}",
-              :metadata => {
-                :fission_account_id => @account.id,
-                :fission_account_name => @account.name
-              },
-              :email => params[:stripeEmail],
-              :card => params[:stripeToken]
-            )
-            payment = CustomerPayment.create(
-              :account_id => @account.id,
-              :customer_id => stripe_customer.id,
-              :type => 'stripe'
-            )
-            stripe_plan = Stripe::Plan.create(
-              :id => SecureRandom.uuid,
-              :name => "Fission plan for account: #{@account.name}",
-              :amount => @plan.generated_cost(:integer),
-              :currency => 'usd',
-              :interval => 'month',
-              :metadata => {
-                :fission_account_id => @account.id,
-                :fission_plans => @plan.id.to_s
-              }
-            )
-            payment.metadata[:breakdown] ||= {}
-            payment.metadata[:breakdown][:plans] = {
-              @plan.id.to_s => {
-                :name => @plan.name,
-                :cost => @plan.generated_cost(&:integer)
-              }
-            }
-            payment.save
-            stripe_customer.subscriptions.create(:plan => stripe_plan.id)
-            flash[:success] = "Order successfully completed (Plan: #{@plan.name})"
-          else
-            flash[:error] = 'Failed to locate requested plan!'
-          end
+        @plan = Plan.find_by_id(params[:plan_id])
+        unless(@account.customer_payment)
+          stripe_customer = Stripe::Customer.create(
+            :description => "Heavy Water Fission account for #{@account.name}",
+            :metadata => {
+              :fission_account_id => @account.id,
+              :fission_account_name => @account.name
+            },
+            :email => params[:stripeEmail],
+            :card => params[:stripeToken]
+          )
+          payment = CustomerPayment.create(
+            :account_id => @account.id,
+            :customer_id => stripe_customer.id,
+            :type => 'stripe'
+          )
         end
-        redirect_to account_billing_details_path
+        flash[:warn] = "Please confirm new plan order (Plan: #{@plan.name})"
+        c_payment = payment || @account.customer_payment
+        @payment = c_payment.remote_data
+        @card = @payment.fetch(:cards, :data, @payment.fetch(:sources, :data, [])).first || {}
+        @line_items = Smash.new(
+          :plans => c_payment.metadata[:breakdown].fetch(:plans, Smash.new),
+          :pipelines => c_payment.metadata[:breakdown].fetch(:pipelines, Smash.new),
+          :new_plans => Smash.new(
+            @plan.id.to_s => Smash.new(
+              :name => @plan.name,
+              :cost => @plan.generated_cost(&:integer)
+            )
+          )
+        )
+        @past_due = @payment[:delinquent]
+        render :details
       end
     end
   end
 
-  def upgrade
-    respond_to do |format|
-      format.js do
-        flash[:error] = 'Unsupported request!'
-        javascript_redirect_to account_billing_details_path
-      end
-      format.html do
-        current_plans = Plan.where(:id => @account.customer_payment.plan_ids).all
-        upgrade_plan = Plan.find_by_id(params[:plan_id])
-        if(upgrade_plan)
-          modify_plan(upgrade_plan, current_plans)
-          flash[:success] = "Upgrade order successfully completed (Plan: #{@plan.name})"
-        else
-          flash[:error] = 'Failed to locate requested plan!'
-        end
-        redirect_to account_billing_details_path
-      end
-    end
-  end
-
-  def downgrade
-    respond_to do |format|
-      format.js do
-        flash[:error] = 'Unsupported request!'
-        javascript_redirect_to account_billing_details_path
-      end
-      format.html do
-        current_plans = Plan.where(:id => @account.customer_payment.plan_ids).all
-        upgrade_plan = Plan.find_by_id(params[:plan_id])
-        if(upgrade_plan)
-          modify_plan(upgrade_plan, current_plans)
-          flash[:warning] = "Downgrade order successfully completed (Plan: #{@plan.name})"
-        else
-          flash[:error] = 'Failed to locate requested plan!'
-        end
-        redirect_to account_billing_details_path
-      end
-    end
-  end
-
-  def modify_existing
+  def modify
     respond_to do |format|
       format.js do
         desired_plan_ids = [params[:plan_ids]].flatten.compact.uniq
@@ -236,6 +184,7 @@ class Account::BillingController < ApplicationController
         :amount => plans.map{|pln| pln.generated_cost(:integer)}.inject(&:+),
         :currency => 'usd',
         :interval => 'month',
+        :trial_period_days => 30,
         :metadata => {
           :fission_account_id => @account.id,
           :fission_plans => plans.map(&:id).map(&:to_s).join(',')
@@ -255,7 +204,7 @@ class Account::BillingController < ApplicationController
         stripe_info[:subscription].plan = stripe_plan.id
         stripe_info[:subscription].save
       else
-        stripe_info[:subscription] = stripe_info[:customer].subscription.create(:plan => stripe_plan.id)
+        stripe_info[:subscription] = stripe_info[:customer].subscriptions.create(:plan => stripe_plan.id)
       end
       if(stripe_info[:plan])
         begin

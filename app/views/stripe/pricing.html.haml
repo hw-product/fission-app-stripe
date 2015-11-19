@@ -24,9 +24,9 @@
               - is_upgrade = true
             - else
               - if is_upgrade
-                = link_to('Upgrade!', account_billing_upgrade_path(:plan_id => plan[:instance].id), :class => 'btn btn-success', :method => :post)
+                = link_to('Purchase!', account_billing_order_path(:plan_id => plan[:instance].id), :class => 'btn btn-success', :method => :post)
               - else
-                = link_to('Downgrade!', account_billing_downgrade_path(:plan_id => plan[:instance].id), :class => 'btn btn-danger', :method => :post)
+                = link_to('Downgrade!', account_billing_order_path(:plan_id => plan[:instance].id), :class => 'btn btn-danger', :method => :post)
 
         %div{:class => "col-md-#{12 / plans.size}"}
           :ruby
