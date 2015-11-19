@@ -76,8 +76,9 @@
           .panel{:class => @past_due ? 'panel-danger' : 'panel-success'}
             .panel-heading
               Payment Information
-              =# link_to yield(:delete_icon), '#', :class => 'pull-right'
-              = link_to yield(:edit_icon), '#', :class => 'pull-right', :id => 'card-edit'
+              %span.pull-right
+                = link_to yield(:edit_icon), '#', :id => 'card-edit'
+                = link_to yield(:delete_icon), '#', :id => 'card-delete', :class => 'window-rails', 'window-rails-ajax' => 'delete', 'window-rails-url' => account_billing_card_delete_path, 'window-rails-confirm' => 'Delete credit card from this account?', 'window-rails-title' => 'Delete payment information'
               .clearfix
             %table.table
               %tr
@@ -93,12 +94,22 @@
               %tr
                 %td
                   %b
+                    Next Payment:
+                %td{:style => 'text-align: right'}
+                  - if @payment.get(:subscriptions, :data).first
+                    = Time.at(@payment.get(:subscriptions, :data).first.get(:current_period_end).to_i).strftime('%Y/%m/%d')
+                  - else
+                    'N/A'
+              %tr
+                %td
+                  %b
                     Current Rate:
                 %td{:style => 'text-align: right'}
                   - if @payment.get(:subscriptions, :data).first
                     %b= "#{number_to_currency(@payment.get(:subscriptions, :data).first.get(:plan, :amount) / 100.to_f, :precision => 0, :locale => :en)}/mo"
                   - else
                     %b= "#{number_to_currency(0, :precision => 0, :locale => :en)}/mo"
+
 
 = render(:partial => 'layouts/container')
 

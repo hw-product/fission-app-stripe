@@ -1,7 +1,7 @@
 class Account::BillingController < ApplicationController
 
-  before_action :validate_user!, :except => [:order, :upgrade, :downgrade, :modify]
-  before_action :validate_access!, :except => [:order, :upgrade, :downgrade, :modify]
+  before_action :validate_user!, :except => [:order, :upgrade, :downgrade, :modify, :details, :card_delete]
+  before_action :validate_access!, :except => [:order, :upgrade, :downgrade, :modify, :details, :card_delete]
 
   before_action do
     @publish_key = Rails.application.config.stripe_publish_key
@@ -15,13 +15,35 @@ class Account::BillingController < ApplicationController
       end
       format.html do
         c_payment = @account.customer_payment
-        @payment = c_payment.remote_data
-        @card = @payment.fetch(:cards, :data, @payment.fetch(:sources, :data, [])).first || {}
-        @line_items = Smash.new(
-          :plans => c_payment.metadata[:breakdown].fetch(:plans, Smash.new),
-          :pipelines => c_payment.metadata[:breakdown].fetch(:pipelines, Smash.new)
-        )
-        @past_due = @payment[:delinquent]
+        if(c_payment)
+          @payment = c_payment.remote_data
+          @card = @payment.fetch(:cards, :data, @payment.fetch(:sources, :data, [])).first || {}
+          @line_items = Smash.new(
+            :plans => c_payment.metadata[:breakdown].fetch(:plans, Smash.new),
+            :pipelines => c_payment.metadata[:breakdown].fetch(:pipelines, Smash.new)
+          )
+          @past_due = @payment[:delinquent]
+        else
+          flash[:error] = 'No payment information exists for this account!'
+          redirect_to dashboard_path
+        end
+      end
+    end
+  end
+
+  def card_delete
+    respond_to do |format|
+      format.js do
+        payment = @account.customer_payment
+        stripe_customer = Stripe::Customer.retrieve(@account.customer_payment.customer_id)
+        stripe_customer.delete
+        payment.destroy
+        flash[:success] = 'Account payment information has been removed'
+        javascript_redirect_to dashboard_path
+      end
+      format.html do
+        flash[:error] = 'Unsupported request!'
+        redirect_to account_billing_details_path
       end
     end
   end
@@ -72,8 +94,8 @@ class Account::BillingController < ApplicationController
         @payment = c_payment.remote_data
         @card = @payment.fetch(:cards, :data, @payment.fetch(:sources, :data, [])).first || {}
         @line_items = Smash.new(
-          :plans => c_payment.metadata[:breakdown].fetch(:plans, Smash.new),
-          :pipelines => c_payment.metadata[:breakdown].fetch(:pipelines, Smash.new),
+          :plans => c_payment.metadata.fetch(:breakdown, Smash.new).fetch(:plans, Smash.new),
+          :pipelines => c_payment.metadata.fetch(:breakdown, Smash.new).fetch(:pipelines, Smash.new),
           :new_plans => Smash.new(
             @plan.id.to_s => Smash.new(
               :name => @plan.name,
