@@ -1,3 +1,8 @@
+# v0.2.18
+* [enhancement] Always preview and confirm prior to subscribe
+* [fix] Properly display content when no subscriptions
+* [feature] Allow card delete when no subscriptions remain
+
 # v0.2.16
 * [feature] Provide customer billing modification
 

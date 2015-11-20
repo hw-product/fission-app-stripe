@@ -1,5 +1,5 @@
 module FissionApp
   module Stripe
-    VERSION = Gem::Version.new('0.2.17')
+    VERSION = Gem::Version.new('0.2.18')
   end
 end
