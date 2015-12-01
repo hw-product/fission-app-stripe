@@ -1,3 +1,7 @@
+# v0.2.20
+* [enhancement] Remove usage of stripe checkout.js button
+* [fix] Allow proper order flow when adding card
+
 # v0.2.18
 * [enhancement] Always preview and confirm prior to subscribe
 * [fix] Properly display content when no subscriptions
