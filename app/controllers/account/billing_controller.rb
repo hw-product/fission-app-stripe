@@ -16,12 +16,16 @@ class Account::BillingController < ApplicationController
       format.html do
         c_payment = @account.customer_payment
         if(c_payment)
-          @payment = c_payment.remote_data
+          @payment = c_payment.remote_data || Smash.new
           @card = @payment.fetch(:cards, :data, @payment.fetch(:sources, :data, [])).first || {}
-          @line_items = Smash.new(
-            :plans => c_payment.metadata[:breakdown].fetch(:plans, Smash.new),
-            :pipelines => c_payment.metadata[:breakdown].fetch(:pipelines, Smash.new)
-          )
+          if(c_payment.metadata[:breakdown])
+            @line_items = Smash.new(
+              :plans => c_payment.metadata[:breakdown].fetch(:plans, Smash.new),
+              :pipelines => c_payment.metadata[:breakdown].fetch(:pipelines, Smash.new)
+            )
+          else
+            @line_items = Smash.new(:plans => {}, :pipelines => {})
+          end
           @past_due = @payment[:delinquent]
           @can_delete = @line_items.values.all?{|i| i.empty?}
         else
@@ -69,11 +73,6 @@ class Account::BillingController < ApplicationController
   def order
     respond_to do |format|
       format.js do
-        flash[:error] = 'Unsupported request!'
-        javascript_redirect_to account_billing_details_path
-      end
-      format.html do
-        @plan = Plan.find_by_id(params[:plan_id])
         unless(@account.customer_payment)
           stripe_customer = Stripe::Customer.create(
             :description => "Heavy Water Fission account for #{@account.name}",
@@ -90,8 +89,12 @@ class Account::BillingController < ApplicationController
             :type => 'stripe'
           )
         end
+        javascript_redirect_to account_billing_order_path(:plan_id => params[:plan_id])
+      end
+      format.html do
+        @plan = Plan.find_by_id(params[:plan_id])
         flash[:warn] = "Please confirm new plan order (Plan: #{@plan.name})"
-        c_payment = payment || @account.customer_payment
+        c_payment = @account.customer_payment
         @payment = c_payment.remote_data
         @card = @payment.fetch(:cards, :data, @payment.fetch(:sources, :data, [])).first || {}
         @line_items = Smash.new(

@@ -59,7 +59,8 @@
         token: function(token){
           $.post(
             item.parents('form').attr('action'), {
-              token: token.id
+              stripeToken: token.id,
+              stripeEmail: token.email
             }
           );
         }

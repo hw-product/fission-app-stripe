@@ -100,7 +100,7 @@
                   - if @payment.get(:subscriptions, :data).first
                     = Time.at(@payment.get(:subscriptions, :data).first.get(:current_period_end).to_i).strftime('%Y/%m/%d')
                   - else
-                    'N/A'
+                    N/A
               %tr
                 %td
                   %b
