@@ -41,8 +41,10 @@ class Account::BillingController < ApplicationController
       format.js do
         payment = @account.customer_payment
         stripe_customer = Stripe::Customer.retrieve(@account.customer_payment.customer_id)
-        stripe_customer.delete
-        payment.destroy
+        notify!(:stripe_card_delete, :user => current_user, :account => @account, :payment => payment, :stripe => stripe_customer) do
+          stripe_customer.delete
+          payment.destroy
+        end
         flash[:success] = 'Account payment information has been removed'
         javascript_redirect_to dashboard_path
       end
@@ -57,9 +59,11 @@ class Account::BillingController < ApplicationController
     respond_to do |format|
       format.js do
         payment = @account.customer_payment
-        stripe_customer = Stripe::Customer.retrieve(@account.customer_payment.customer_id)
-        stripe_customer.source = params[:token]
-        stripe_customer.save
+        stripe_customer = Stripe::Customer.retrieve(payment.customer_id)
+        notify!(:stripe_card_delete, :user => current_user, :account => @account, :payment => payment, :stripe => stripe_customer) do
+          stripe_customer.source = params[:token]
+          stripe_customer.save
+        end
         flash[:success] = 'New credit card information has been saved!'
         javascript_redirect_to account_billing_details_path
       end
@@ -74,20 +78,22 @@ class Account::BillingController < ApplicationController
     respond_to do |format|
       format.js do
         unless(@account.customer_payment)
-          stripe_customer = Stripe::Customer.create(
-            :description => "Heavy Water Fission account for #{@account.name}",
-            :metadata => {
-              :fission_account_id => @account.id,
-              :fission_account_name => @account.name
-            },
-            :email => params[:stripeEmail],
-            :card => params[:stripeToken]
-          )
-          payment = CustomerPayment.create(
-            :account_id => @account.id,
-            :customer_id => stripe_customer.id,
-            :type => 'stripe'
-          )
+          notify!(:stripe_account_create, :user => current_user, :account => @account) do
+            stripe_customer = Stripe::Customer.create(
+              :description => "Heavy Water Fission account for #{@account.name}",
+              :metadata => {
+                :fission_account_id => @account.id,
+                :fission_account_name => @account.name
+              },
+              :email => params[:stripeEmail],
+              :card => params[:stripeToken]
+            )
+            payment = CustomerPayment.create(
+              :account_id => @account.id,
+              :customer_id => stripe_customer.id,
+              :type => 'stripe'
+            )
+          end
         end
         javascript_redirect_to account_billing_order_path(:plan_id => params[:plan_id])
       end
@@ -124,7 +130,9 @@ class Account::BillingController < ApplicationController
         else
           stripe_info = stripe_account_information
           desired_plans = Plan.where(:id => desired_plan_ids).all
-          set_account_plans(desired_plans, stripe_info)
+          notify!(:stripe_plan_update, :user => current_user, :account => @account, :plans => desired_plans) do
+            set_account_plans(desired_plans, stripe_info)
+          end
           flash[:success] = "Subscriptions have been successfully modified!"
         end
         javascript_redirect_to account_billing_details_path
