@@ -41,7 +41,7 @@ class Account::BillingController < ApplicationController
       format.js do
         payment = @account.customer_payment
         stripe_customer = Stripe::Customer.retrieve(@account.customer_payment.customer_id)
-        notify!(:stripe_card_delete, :user => current_user, :account => @account, :payment => payment, :stripe => stripe_customer) do
+        notify!(:stripe_card_delete, :payment => payment, :stripe => stripe_customer) do
           stripe_customer.delete
           payment.destroy
         end
@@ -60,7 +60,7 @@ class Account::BillingController < ApplicationController
       format.js do
         payment = @account.customer_payment
         stripe_customer = Stripe::Customer.retrieve(payment.customer_id)
-        notify!(:stripe_card_delete, :user => current_user, :account => @account, :payment => payment, :stripe => stripe_customer) do
+        notify!(:stripe_card_delete, :payment => payment, :stripe => stripe_customer) do
           stripe_customer.source = params[:token]
           stripe_customer.save
         end
@@ -78,7 +78,7 @@ class Account::BillingController < ApplicationController
     respond_to do |format|
       format.js do
         unless(@account.customer_payment)
-          notify!(:stripe_account_create, :user => current_user, :account => @account) do
+          notify!(:stripe_account_create) do
             stripe_customer = Stripe::Customer.create(
               :description => "Heavy Water Fission account for #{@account.name}",
               :metadata => {
@@ -130,7 +130,7 @@ class Account::BillingController < ApplicationController
         else
           stripe_info = stripe_account_information
           desired_plans = Plan.where(:id => desired_plan_ids).all
-          notify!(:stripe_plan_update, :user => current_user, :account => @account, :plans => desired_plans) do
+          notify!(:stripe_plan_update, :plans => desired_plans) do
             set_account_plans(desired_plans, stripe_info)
           end
           flash[:success] = "Subscriptions have been successfully modified!"
