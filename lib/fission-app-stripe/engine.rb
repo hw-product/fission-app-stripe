@@ -55,11 +55,16 @@ module FissionApp
 
       # @return [Hash] account navigation
       def fission_account_navigation(product, *_)
-        if(product.internal_name == 'billing')
-          Smash.new('Billing' => Rails.application.routes.url_helpers.account_billing_details_path)
-        else
-          Smash.new
-        end
+        Smash.new(
+          'Billing' => Rails.application.routes.url_helpers.account_billing_details_path
+        )
+      end
+
+      # @return [Array<Fission::Models::Permission>] default permissions
+      def default_user_permissions(*_)
+        [
+          Fission::Data::Models::Permission.new(:pattern => '/billing.*')
+        ]
       end
 
     end
