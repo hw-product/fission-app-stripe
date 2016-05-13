@@ -67,7 +67,8 @@
                     %b#details-rate= "#{number_to_currency(0, :precision => 0, :locale => :en)}/mo"
         .panel-footer.bg-info
           .div.pull-right
-            = link_to yield(:ok_icon), '#', :id => 'billing-update', :class => 'window-rails', 'window-rails-callback' => 'billing_update', 'window-rails-confirm' => 'Update account subscriptions?', 'window-rails-title' => 'Billing Update'
+            %button#apply-billing-changes.btn.btn-success{:disabled => true}
+              Apply
           .clearfix
     .col-md-4
       .row
@@ -147,6 +148,11 @@
       total = total + Number($(this).attr('data-plan-cost'));
     });
     $('#details-rate').html('$' + total.toFixed(2) + '/mo');
+    if($('.plans.new .plan').size() > 0 || $('.plans .plan.disabled').size() > 0){
+      $('#apply-billing-changes').prop('disabled', false);
+    } else {
+      $('#apply-billing-changes').prop('disabled', true);
+    }
   }
 
 
@@ -190,6 +196,14 @@
 
     calculate_billing();
   }
+
+  $('#apply-billing-changes').click(function(){
+    window_rails.confirm.open({
+      title: 'Billing Update',
+      content: 'Update account subscriptions?',
+      callback: 'billing_update'
+    });
+  });
 
   $(document).ready(billing_setup);
   $(document).on('page:load', billing_setup);
