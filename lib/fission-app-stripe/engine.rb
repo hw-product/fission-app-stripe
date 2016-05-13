@@ -32,7 +32,7 @@ module FissionApp
 
         c_b = Rails.application.config.settings.fetch(:callbacks, :before, :dashboard, :summary, Smash.new)
         c_b[:buy_our_stuff!] = lambda do |*_|
-          if(current_user.run_state.plans && current_user.run_state.plans.empty? && current_user.run_state.current_product_features && current_user.run_state.current_product_features.empty?)
+          if(current_user.run_state.plans && current_user.run_state.plans.empty? && current_user.run_state.product_features && current_user.run_state.product_features.empty?)
             if(Rails.application.config.settings.fetch(:stripe, :plan_redirect, true))
               redirect_to Rails.application.config.settings.fetch(:stripe, :plan_redirect_path, pricing_path)
             end
